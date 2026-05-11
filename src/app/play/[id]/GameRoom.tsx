@@ -15,6 +15,7 @@ import {
   Board,
   CellValue,
   DIFFICULTY_LABEL,
+  clearNotesInPeers,
   decodeBoard,
   encodeBoard,
   findConflicts,
@@ -24,6 +25,7 @@ import {
 import { SudokuBoard } from "@/components/sudoku/SudokuBoard";
 import { NumberPad } from "@/components/sudoku/NumberPad";
 import { finishCoop, finishRace, recordMove, startRace } from "@/lib/games/actions";
+import { EndGameButton } from "./EndGameButton";
 
 type Game = Database["public"]["Tables"]["games"]["Row"];
 type Player = Database["public"]["Tables"]["game_players"]["Row"];
@@ -487,10 +489,16 @@ export function GameRoom({
       newBoard[selected] = value;
       setBoard(newBoard);
       updateNotes((n) => {
-        if (!n[selected]) return n;
-        const c = { ...n };
-        delete c[selected];
-        return c;
+        // Drop notes in this cell, and clear `value` from peer-cell notes.
+        let next = n;
+        if (n[selected]) {
+          next = { ...next };
+          delete next[selected];
+        }
+        if (value !== 0) {
+          next = clearNotesInPeers(next, selected, value);
+        }
+        return next;
       });
 
       if (value !== 0 && solution[selected] !== value) {
@@ -656,6 +664,19 @@ export function GameRoom({
             <span className="font-mono text-xs px-2 py-1.5 rounded-md bg-paper-raised border border-edge text-ink tracking-widest">
               {game.invite_code}
             </span>
+          )}
+          {!complete && (
+            <EndGameButton
+              gameId={game.id}
+              label={
+                game.mode === "race"
+                  ? "Forfeit"
+                  : game.mode === "coop"
+                    ? "End game"
+                    : "Quit"
+              }
+              variant="danger"
+            />
           )}
         </div>
       </div>
@@ -831,6 +852,31 @@ export function GameRoom({
           )}
         </aside>
       </div>
+
+      {game.status === "abandoned" && !complete && (
+        <div className="fixed inset-0 flex items-center justify-center bg-ink/40 backdrop-blur-sm z-50 p-4">
+          <div className="bg-paper border border-edge rounded-2xl p-7 sm:p-8 max-w-md w-full text-center shadow-[var(--shadow-lifted)]">
+            <h2 className="font-display text-2xl text-ink mb-1">Game ended</h2>
+            <div className="text-sm text-ink-soft mb-6">
+              This game was ended.
+            </div>
+            <div className="flex gap-2.5 justify-center">
+              <Link
+                href="/new-game"
+                className="px-5 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
+              >
+                New game
+              </Link>
+              <Link
+                href="/"
+                className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+              >
+                Home
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {complete && (
         <div className="fixed inset-0 flex items-center justify-center bg-ink/40 backdrop-blur-sm z-50 p-4">

@@ -88,9 +88,11 @@ export function SudokuBoard({
               isGiven
                 ? "text-[var(--cell-given)] font-semibold"
                 : "text-[var(--cell-user)] font-medium",
-              // Mistakes
-              isWrong && !isConflict && "!text-[var(--cell-conflict-ink)]",
-              // Background priority
+              // Mistakes win text color regardless of conflict — vivid red,
+              // bold weight, so a wrong digit can't be mistaken for a correct
+              // one in the brand color.
+              isWrong && "!text-[var(--cell-conflict-ink)] !font-bold",
+              // Background priority: conflict > selected > matchesValue > inSelLine > wrong > lockedByOther
               isConflict && "!bg-[var(--cell-conflict)]",
               !isConflict && isSelected && "!bg-[var(--cell-selected)]",
               !isConflict &&
@@ -104,7 +106,14 @@ export function SudokuBoard({
                 "!bg-[var(--cell-related)]",
               !isConflict &&
                 !isSelected &&
+                !matchesSelectedValue &&
                 !inSelLine &&
+                isWrong &&
+                "!bg-[var(--cell-wrong-bg)]",
+              !isConflict &&
+                !isSelected &&
+                !inSelLine &&
+                !isWrong &&
                 lockedByOther &&
                 "!bg-warning-soft",
               lockedByOther && "cursor-not-allowed"

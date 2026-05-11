@@ -6,6 +6,7 @@ import {
   Board,
   CellValue,
   Puzzle,
+  clearNotesInPeers,
   cloneBoard,
   findConflicts,
   isBoardComplete,
@@ -82,8 +83,14 @@ function reducer(state: GameState, action: Action): GameState {
       const newCurrent = state.current.slice() as Board;
       newCurrent[idx] = next;
 
-      const newNotes = { ...state.notes };
-      if (next !== 0) delete newNotes[idx];
+      // Drop the note in this cell, then sweep this value out of the notes of
+      // every peer (same row / col / 3x3 box) — what every modern sudoku app
+      // does when you commit a number.
+      let newNotes = { ...state.notes };
+      if (next !== 0) {
+        delete newNotes[idx];
+        newNotes = clearNotesInPeers(newNotes, idx, next);
+      }
 
       const isMistake =
         next !== 0 && state.solution[idx] !== next ? state.mistakes + 1 : state.mistakes;

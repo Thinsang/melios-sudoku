@@ -347,6 +347,46 @@ export async function finishRace(
   }
 }
 
+/**
+ * End an in-progress game for everyone. Any participant can call this; it
+ * flips the game's status to 'abandoned' and stamps completed_at. The board
+ * stays in the DB so it'll still show up on profile history (as "Abandoned").
+ *
+ * Pass `redirectTo` to control where the caller is sent afterwards — by
+ * default we send them home.
+ */
+export async function abandonGame(gameId: string, redirectTo: string = "/") {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Verify the caller is actually a participant. Guests aren't supported here
+  // (RLS would block the update anyway).
+  if (user) {
+    const { data: playerRow } = await supabase
+      .from("game_players")
+      .select("id")
+      .eq("game_id", gameId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!playerRow) return;
+  }
+
+  await supabase
+    .from("games")
+    .update({
+      status: "abandoned",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", gameId)
+    .in("status", ["waiting", "active"]);
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  redirect(redirectTo);
+}
+
 export async function finishCoop(gameId: string, mistakes: number) {
   const supabase = await createClient();
   await supabase

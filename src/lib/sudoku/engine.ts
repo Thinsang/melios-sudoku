@@ -146,6 +146,55 @@ export function progressPercent(given: Board, current: Board, solution: Board): 
   return Math.round((correct / totalToFill) * 100);
 }
 
+/**
+ * The 20 peer cells of a given index: cells in the same row, column, or 3x3
+ * box (excluding the cell itself). Used to auto-clear pencil-mark notes
+ * containing a value when that value is committed elsewhere in the unit.
+ */
+export function getPeers(index: number): number[] {
+  const row = Math.floor(index / 9);
+  const col = index % 9;
+  const boxRow = Math.floor(row / 3) * 3;
+  const boxCol = Math.floor(col / 3) * 3;
+  const peers = new Set<number>();
+  for (let i = 0; i < 9; i++) {
+    peers.add(row * 9 + i);
+    peers.add(i * 9 + col);
+  }
+  for (let r = boxRow; r < boxRow + 3; r++) {
+    for (let c = boxCol; c < boxCol + 3; c++) {
+      peers.add(r * 9 + c);
+    }
+  }
+  peers.delete(index);
+  return Array.from(peers);
+}
+
+/**
+ * Remove `value` from any pencil-mark notes in `index`'s peer cells.
+ * Returns a new notes record (does not mutate `notes`). If no notes change,
+ * returns the same reference so callers can short-circuit.
+ */
+export function clearNotesInPeers(
+  notes: Record<number, number[]>,
+  index: number,
+  value: number
+): Record<number, number[]> {
+  if (value === 0) return notes;
+  let changed = false;
+  const next: Record<number, number[]> = { ...notes };
+  for (const peer of getPeers(index)) {
+    const peerNotes = next[peer];
+    if (peerNotes && peerNotes.includes(value)) {
+      const filtered = peerNotes.filter((n) => n !== value);
+      if (filtered.length === 0) delete next[peer];
+      else next[peer] = filtered;
+      changed = true;
+    }
+  }
+  return changed ? next : notes;
+}
+
 export function findConflicts(board: Board): Set<number> {
   const conflicts = new Set<number>();
   for (let i = 0; i < BOARD_SIZE; i++) {

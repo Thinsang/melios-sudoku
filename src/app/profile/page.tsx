@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
+import { ProfileEndGameButton } from "./ProfileEndGameButton";
 
 function fmtTime(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -147,12 +148,15 @@ export default async function ProfilePage() {
                       </div>
                     </div>
                     {!finished && r.games.status === "active" && (
-                      <Link
-                        href={`/play/${r.games.id}`}
-                        className="px-3.5 py-1.5 rounded-md bg-brand hover:bg-brand-hover text-brand-ink text-sm font-medium transition-colors duration-75"
-                      >
-                        Resume
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <ProfileEndGameButton gameId={r.games.id} />
+                        <Link
+                          href={`/play/${r.games.id}`}
+                          className="px-3.5 py-1.5 rounded-md bg-brand hover:bg-brand-hover text-brand-ink text-sm font-medium transition-colors duration-75"
+                        >
+                          Resume
+                        </Link>
+                      </div>
                     )}
                   </li>
                 );

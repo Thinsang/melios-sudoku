@@ -52,8 +52,10 @@
   --cell-selected: #ede4fe;
   --cell-related: #f0eadc;
   --cell-match: #ddc7fb;
-  --cell-conflict: #f4d8d0;
-  --cell-conflict-ink: #a33b2b;
+  /* Conflict / wrong — saturated red so mistakes can't be missed */
+  --cell-wrong-bg: #fff1f1;        /* subtle red wash for wrong (non-conflict) */
+  --cell-conflict: #fee2e2;        /* stronger red wash for actual rule conflicts */
+  --cell-conflict-ink: #dc2626;    /* vivid red text */
 
   /* Shadows */
   --shadow-soft: 0 1px 2px rgba(28, 25, 22, 0.04), 0 2px 6px rgba(28, 25, 22, 0.04);
@@ -96,8 +98,9 @@
   --cell-selected: #2d2347;
   --cell-related: #221f1c;
   --cell-match: #3a2d5c;
-  --cell-conflict: #2c1a17;
-  --cell-conflict-ink: #e89784;
+  --cell-wrong-bg: #2a1414;
+  --cell-conflict: #401818;
+  --cell-conflict-ink: #f87171;
 
   --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
   --shadow-lifted: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
