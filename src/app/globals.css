@@ -11,11 +11,11 @@
  */
 
 :root {
-  /* Surface */
-  --canvas: #faf6ee;          /* page background — warm cream */
-  --paper: #ffffff;           /* cards, surfaces sitting on canvas */
-  --paper-raised: #f6f1e5;    /* elevated/highlighted surfaces */
-  --paper-sunken: #f0eadc;    /* inputs, recessed areas */
+  /* Surface — warm cream still feels right under purple */
+  --canvas: #faf6ee;
+  --paper: #ffffff;
+  --paper-raised: #f6f1e5;
+  --paper-sunken: #f0eadc;
 
   /* Borders */
   --edge: #ebe4d3;
@@ -26,11 +26,11 @@
   --ink-soft: #6b6358;
   --ink-faint: #a39a8a;
 
-  /* Brand & semantic */
-  --brand: #c45d3a;           /* burnt sienna */
-  --brand-hover: #b04a29;
-  --brand-soft: #f7e2d2;
-  --brand-ink: #ffffff;       /* foreground on brand bg */
+  /* Brand & semantic — deep royal purple */
+  --brand: #6d28d9;
+  --brand-hover: #5b21b6;
+  --brand-soft: #ede4fe;
+  --brand-ink: #ffffff;
 
   --success: #5a8a4a;
   --success-soft: #e2ead8;
@@ -39,18 +39,19 @@
   --danger: #b8503f;
   --danger-soft: #f4d8d0;
 
-  /* Game-specific (difficulty) */
+  /* Game-specific (difficulty) — expert moved to crimson so it doesn't
+     collide with the new purple brand */
   --diff-easy: #7fa37a;
   --diff-medium: #3e6098;
   --diff-hard: #d89243;
-  --diff-expert: #c45d3a;
+  --diff-expert: #be123c;
 
   /* Sudoku cell highlights */
   --cell-given: #1c1916;
-  --cell-user: #c45d3a;
-  --cell-selected: #f7e2d2;
+  --cell-user: #6d28d9;
+  --cell-selected: #ede4fe;
   --cell-related: #f0eadc;
-  --cell-match: #efd9c5;
+  --cell-match: #ddc7fb;
   --cell-conflict: #f4d8d0;
   --cell-conflict-ink: #a33b2b;
 
@@ -72,9 +73,10 @@
   --ink-soft: #a39e92;
   --ink-faint: #6c665f;
 
-  --brand: #e07a56;
-  --brand-hover: #d2683e;
-  --brand-soft: #2d1e15;
+  /* Lighter purple for dark mode so it reads well on dark surfaces */
+  --brand: #a78bfa;
+  --brand-hover: #c4b1ff;
+  --brand-soft: #251a3a;
   --brand-ink: #100f0d;
 
   --success: #87b57a;
@@ -87,13 +89,13 @@
   --diff-easy: #87b57a;
   --diff-medium: #6589c0;
   --diff-hard: #e0a95c;
-  --diff-expert: #e07a56;
+  --diff-expert: #f87171;
 
   --cell-given: #f2ede3;
-  --cell-user: #e07a56;
-  --cell-selected: #3a261c;
+  --cell-user: #a78bfa;
+  --cell-selected: #2d2347;
   --cell-related: #221f1c;
-  --cell-match: #2d2017;
+  --cell-match: #3a2d5c;
   --cell-conflict: #2c1a17;
   --cell-conflict-ink: #e89784;
 

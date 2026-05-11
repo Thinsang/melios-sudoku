@@ -60,6 +60,9 @@ export async function createGame(
 
   const inviteCode = generateInviteCode();
 
+  // Race starts in 'waiting' status — the lobby holds the timer at 0 until
+  // all players have pressed Ready. Coop and solo (saved) start immediately.
+  const isRace = mode === "race";
   const { data: game, error } = await supabase
     .from("games")
     .insert({
@@ -68,10 +71,10 @@ export async function createGame(
       puzzle: puzzleStr,
       solution: solutionStr,
       current_board: mode === "coop" ? puzzleStr : null,
-      status: "active",
+      status: isRace ? "waiting" : "active",
       invite_code: inviteCode,
       created_by: user.id,
-      started_at: new Date().toISOString(),
+      started_at: isRace ? null : new Date().toISOString(),
     })
     .select("id")
     .single();
@@ -283,6 +286,29 @@ export async function recordMove(
       value,
     });
   }
+}
+
+/**
+ * Flip a race game from 'waiting' → 'active' and stamp started_at to a moment
+ * a few seconds in the future. Every client uses started_at as the source of
+ * truth for the countdown, so they all see "3, 2, 1, Go" in sync.
+ */
+export async function startRace(gameId: string, countdownMs = 3000) {
+  const supabase = await createClient();
+  const startAt = new Date(Date.now() + countdownMs).toISOString();
+
+  // Only flip if still waiting — first writer wins, others no-op.
+  const { data: cur } = await supabase
+    .from("games")
+    .select("status, mode")
+    .eq("id", gameId)
+    .maybeSingle();
+  if (!cur || cur.mode !== "race" || cur.status !== "waiting") return;
+
+  await supabase
+    .from("games")
+    .update({ status: "active", started_at: startAt })
+    .eq("id", gameId);
 }
 
 export async function finishRace(

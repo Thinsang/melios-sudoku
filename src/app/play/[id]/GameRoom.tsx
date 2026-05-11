@@ -23,7 +23,7 @@ import {
 } from "@/lib/sudoku";
 import { SudokuBoard } from "@/components/sudoku/SudokuBoard";
 import { NumberPad } from "@/components/sudoku/NumberPad";
-import { finishCoop, finishRace, recordMove } from "@/lib/games/actions";
+import { finishCoop, finishRace, recordMove, startRace } from "@/lib/games/actions";
 
 type Game = Database["public"]["Tables"]["games"]["Row"];
 type Player = Database["public"]["Tables"]["game_players"]["Row"];
@@ -81,6 +81,42 @@ export function GameRoom({
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
 
+  // Race-only: lobby state. `raceReady` is the live broadcast view; once all
+  // joined players are ready, any client calls startRace() which sets
+  // game.started_at to a few seconds in the future for a synchronized 3-2-1.
+  const [raceReady, setRaceReady] = useState<Set<string>>(new Set());
+  const [countdownSec, setCountdownSec] = useState<number | null>(null);
+
+  // For all modes: game is "live" once game.started_at is set and in the past.
+  const startMs = game.started_at ? Date.parse(game.started_at) : null;
+
+  // `phase` is state (not a direct Date.now() comparison) so that it transitions
+  // deterministically and re-renders the right overlay at the right moment.
+  const [phase, setPhase] = useState<"waiting" | "countdown" | "live">("waiting");
+
+  useEffect(() => {
+    // Derive phase from startMs whenever it changes. The lint rule only
+    // flags the first sync setState; the others within the same effect are
+    // implicitly covered.
+    if (startMs === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPhase("waiting");
+      return;
+    }
+    const diff = startMs - Date.now();
+    if (diff <= 0) {
+      setPhase("live");
+      return;
+    }
+    setPhase("countdown");
+    const id = window.setTimeout(() => setPhase("live"), diff);
+    return () => window.clearTimeout(id);
+  }, [startMs]);
+
+  const isWaiting = game.mode === "race" && phase === "waiting";
+  const isCountingDown = phase === "countdown";
+  const isLive = phase === "live";
+
   const [board, setBoard] = useState<Board>(() => {
     try {
       if (g0.mode === "coop") return decodeBoard(g0.current_board ?? g0.puzzle);
@@ -126,18 +162,36 @@ export function GameRoom({
     [given, board, solution]
   );
 
-  // Timer: coop = since game.started_at; race/solo = since me.joined_at
+  // Timer: ticks only while game is live (started_at set and in the past).
+  // Race waits in the lobby until all ready; the countdown phase shows the
+  // overlay but doesn't tick the elapsed counter.
   useEffect(() => {
     if (paused || complete) return;
-    const startMs =
-      game.mode === "coop" && game.started_at
-        ? Date.parse(game.started_at)
-        : Date.parse(me.joined_at);
+    if (!isLive || startMs === null) return;
     const tick = () => setElapsed(Date.now() - startMs);
     tick();
     const id = window.setInterval(tick, 1000);
     return () => window.clearInterval(id);
-  }, [paused, complete, game.mode, game.started_at, me.joined_at]);
+  }, [paused, complete, isLive, startMs]);
+
+  // Countdown phase — show "3 / 2 / 1 / Go" while startMs is in the future.
+  useEffect(() => {
+    if (startMs === null || startMs <= Date.now()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (countdownSec !== null) setCountdownSec(null);
+      return;
+    }
+    const update = () => {
+      const diff = startMs - Date.now();
+      if (diff <= 0) setCountdownSec(null);
+      else setCountdownSec(Math.ceil(diff / 1000));
+    };
+    update();
+    const id = window.setInterval(update, 100);
+    return () => window.clearInterval(id);
+    // We deliberately don't include countdownSec — it's set inside this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startMs]);
 
   // Realtime subscription
   useEffect(() => {
@@ -230,6 +284,25 @@ export function GameRoom({
         } catch (err) {
           console.warn("coop_board broadcast decode failed:", err);
         }
+      })
+      .on("broadcast", { event: "coop_notes" }, ({ payload }) => {
+        if (g0.mode !== "coop") return;
+        if (!payload || typeof payload !== "object") return;
+        const next = (payload as { notes?: Record<number, number[]> }).notes;
+        if (next) setNotes(next);
+      })
+      .on("broadcast", { event: "ready" }, ({ payload }) => {
+        if (!payload || typeof payload !== "object") return;
+        const { player_id, ready } = payload as {
+          player_id: string;
+          ready: boolean;
+        };
+        setRaceReady((s) => {
+          const n = new Set(s);
+          if (ready) n.add(player_id);
+          else n.delete(player_id);
+          return n;
+        });
       })
       .on("broadcast", { event: "cell_lock" }, ({ payload }) => {
         if (!payload || typeof payload !== "object") return;
@@ -345,6 +418,64 @@ export function GameRoom({
     [cellLocks, me.id]
   );
 
+  // setNotes wrapper that also broadcasts to other co-op players. In co-op
+  // mode notes are shared (both players see the same pencil marks); in race /
+  // solo modes this is just a pass-through to setNotes.
+  const updateNotes = useCallback(
+    (
+      updater: (
+        prev: Record<number, number[]>
+      ) => Record<number, number[]>
+    ) => {
+      setNotes((prev) => {
+        const next = updater(prev);
+        if (game.mode === "coop") {
+          const ch = channelRef.current;
+          if (ch) {
+            void ch.send({
+              type: "broadcast",
+              event: "coop_notes",
+              payload: { notes: next },
+            });
+          }
+        }
+        return next;
+      });
+    },
+    [game.mode]
+  );
+
+  // Auto-start the race when all currently-joined players are ready.
+  // Multiple clients may fire this; startRace() is idempotent (it checks
+  // the current status before flipping it).
+  useEffect(() => {
+    if (game.mode !== "race") return;
+    if (game.status !== "waiting") return;
+    if (startMs !== null) return; // already started/counting down
+    if (players.length === 0) return;
+    const allReady = players.every((p) => raceReady.has(p.id));
+    if (!allReady) return;
+    void startRace(game.id);
+  }, [game.mode, game.status, game.id, players, raceReady, startMs]);
+
+  const toggleReady = useCallback(() => {
+    setRaceReady((prev) => {
+      const isReady = prev.has(me.id);
+      const next = new Set(prev);
+      if (isReady) next.delete(me.id);
+      else next.add(me.id);
+      const ch = channelRef.current;
+      if (ch) {
+        void ch.send({
+          type: "broadcast",
+          event: "ready",
+          payload: { player_id: me.id, ready: !isReady },
+        });
+      }
+      return next;
+    });
+  }, [me.id]);
+
   const handleInput = useCallback(
     (value: CellValue) => {
       if (selected === null) return;
@@ -355,7 +486,7 @@ export function GameRoom({
       const newBoard = board.slice() as Board;
       newBoard[selected] = value;
       setBoard(newBoard);
-      setNotes((n) => {
+      updateNotes((n) => {
         if (!n[selected]) return n;
         const c = { ...n };
         delete c[selected];
@@ -371,7 +502,17 @@ export function GameRoom({
         broadcastProgress(progressPercent(given, newBoard, solution));
       }
     },
-    [selected, given, board, solution, game.mode, isLockedByOther, persist, broadcastProgress]
+    [
+      selected,
+      given,
+      board,
+      solution,
+      game.mode,
+      isLockedByOther,
+      persist,
+      broadcastProgress,
+      updateNotes,
+    ]
   );
 
   const handleClear = useCallback(() => {
@@ -382,7 +523,7 @@ export function GameRoom({
     const newBoard = board.slice() as Board;
     newBoard[selected] = 0 as CellValue;
     setBoard(newBoard);
-    setNotes((n) => {
+    updateNotes((n) => {
       if (!n[selected]) return n;
       const c = { ...n };
       delete c[selected];
@@ -402,6 +543,7 @@ export function GameRoom({
     persist,
     broadcastProgress,
     solution,
+    updateNotes,
   ]);
 
   const handleToggleNote = useCallback(
@@ -410,7 +552,7 @@ export function GameRoom({
       if (given[selected] !== 0) return;
       if (board[selected] !== 0) return;
       if (game.mode === "coop" && isLockedByOther(selected)) return;
-      setNotes((n) => {
+      updateNotes((n) => {
         const existing = new Set(n[selected] ?? []);
         if (existing.has(value)) existing.delete(value);
         else existing.add(value);
@@ -420,12 +562,13 @@ export function GameRoom({
         return c;
       });
     },
-    [selected, given, board, game.mode, isLockedByOther]
+    [selected, given, board, game.mode, isLockedByOther, updateNotes]
   );
 
   // Keyboard
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (!isLive) return; // lobby + countdown swallow keypresses
       if (selected === null) return;
       if (e.key >= "1" && e.key <= "9") {
         e.preventDefault();
@@ -449,7 +592,7 @@ export function GameRoom({
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [selected, handleInput, handleClear]);
+  }, [selected, handleInput, handleClear, isLive]);
 
   // Game complete
   useEffect(() => {
@@ -528,7 +671,8 @@ export function GameRoom({
             <button
               type="button"
               onClick={() => setPaused((p) => !p)}
-              className="px-2.5 py-1 rounded-md border border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised text-xs font-medium transition-colors duration-75"
+              disabled={!isLive}
+              className="px-2.5 py-1 rounded-md border border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium transition-colors duration-75"
             >
               {paused ? "Resume" : "Pause"}
             </button>
@@ -543,11 +687,50 @@ export function GameRoom({
               selected={selected}
               conflicts={conflicts}
               lockedBy={lockedByMap}
-              onSelect={setSelected}
+              onSelect={(idx) => isLive && setSelected(idx)}
             />
-            {paused && (
+
+            {/* Race lobby — shown until all players are ready and the
+                 countdown is triggered. */}
+            {isWaiting && (
+              <RaceLobby
+                me={me}
+                players={players}
+                readySet={raceReady}
+                onToggleReady={toggleReady}
+                onCopyInvite={copyInvite}
+                copied={copied}
+                inviteCode={game.invite_code}
+              />
+            )}
+
+            {/* 3-2-1 countdown — shown once startMs is set but still in the
+                 future. The big number is derived from countdownSec. */}
+            {isCountingDown && (
+              <div className="absolute inset-0 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl">
+                <div className="text-center">
+                  <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium mb-2">
+                    Get ready
+                  </div>
+                  <div className="font-display text-[6rem] sm:text-[8rem] leading-none text-brand">
+                    {countdownSec ?? "Go"}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {paused && isLive && (
               <div className="absolute inset-0 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
-                <div className="font-display text-2xl text-ink">Paused</div>
+                <div className="text-center">
+                  <div className="font-display text-2xl text-ink mb-3">Paused</div>
+                  <button
+                    type="button"
+                    onClick={() => setPaused(false)}
+                    className="px-5 py-2 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
+                  >
+                    Resume
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -560,45 +743,92 @@ export function GameRoom({
             onClear={handleClear}
             onToggleNoteMode={() => setNoteMode((n) => !n)}
             onUndo={() => {}}
+            disabled={!isLive}
           />
         </div>
 
         <aside className="w-full lg:w-72 flex flex-col gap-3">
-          <div className="rounded-2xl border border-edge bg-paper p-4">
-            <div className="font-display text-base text-ink mb-3">
-              {game.mode === "race" ? "Race" : "Players"}
+          {game.mode === "coop" ? (
+            // Co-op: one shared progress bar (the team's progress on the
+            // shared board) and a simple player roster underneath.
+            <div className="rounded-2xl border border-edge bg-paper p-4">
+              <div className="font-display text-base text-ink mb-3">
+                Team
+              </div>
+              <PlayerRow
+                name="Shared progress"
+                percent={myPercent}
+                finished={complete}
+                finishMs={complete ? elapsed : null}
+                mode="coop"
+              />
+              <div className="mt-4 pt-3 border-t border-edge">
+                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium mb-2">
+                  Players
+                </div>
+                <ul className="flex flex-col gap-1.5 text-sm">
+                  {players.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center gap-2 text-ink"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                      <span className="truncate">
+                        {p.display_name}
+                        {p.id === me.id && (
+                          <span className="text-ink-faint"> (you)</span>
+                        )}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                {opponents.length === 0 && (
+                  <p className="text-xs text-ink-faint mt-2">
+                    Waiting for someone to join. Share the invite link.
+                  </p>
+                )}
+              </div>
             </div>
-            <PlayerRow
-              name={`${me.display_name} (you)`}
-              percent={myPercent}
-              finished={complete}
-              finishMs={complete ? elapsed : null}
-              mode={game.mode}
-            />
-            {opponents.map((opp) => {
-              const prog = oppProgress[opp.id];
-              const finished = Boolean(opp.finished_at) || prog?.finishedAt != null;
-              const finishMs = opp.finish_time_ms ?? prog?.finishTimeMs ?? null;
-              const percent = finished
-                ? 100
-                : prog?.percent ?? opp.progress_pct ?? 0;
-              return (
-                <PlayerRow
-                  key={opp.id}
-                  name={opp.display_name}
-                  percent={percent}
-                  finished={finished}
-                  finishMs={finishMs}
-                  mode={game.mode}
-                />
-              );
-            })}
-            {opponents.length === 0 && game.mode !== "solo" && (
-              <p className="text-xs text-ink-faint mt-2">
-                Waiting for someone to join. Share the invite link.
-              </p>
-            )}
-          </div>
+          ) : (
+            // Race / solo-saved: per-player progress bars.
+            <div className="rounded-2xl border border-edge bg-paper p-4">
+              <div className="font-display text-base text-ink mb-3">
+                {game.mode === "race" ? "Race" : "Players"}
+              </div>
+              <PlayerRow
+                name={`${me.display_name} (you)`}
+                percent={myPercent}
+                finished={complete}
+                finishMs={complete ? elapsed : null}
+                mode={game.mode}
+              />
+              {opponents.map((opp) => {
+                const prog = oppProgress[opp.id];
+                const finished =
+                  Boolean(opp.finished_at) || prog?.finishedAt != null;
+                const finishMs =
+                  opp.finish_time_ms ?? prog?.finishTimeMs ?? null;
+                const percent = finished
+                  ? 100
+                  : prog?.percent ?? opp.progress_pct ?? 0;
+                return (
+                  <PlayerRow
+                    key={opp.id}
+                    name={opp.display_name}
+                    percent={percent}
+                    finished={finished}
+                    finishMs={finishMs}
+                    mode={game.mode}
+                  />
+                );
+              })}
+              {opponents.length === 0 && game.mode !== "solo" && (
+                <p className="text-xs text-ink-faint mt-2">
+                  Waiting for someone to join. Share the invite link.
+                </p>
+              )}
+            </div>
+          )}
         </aside>
       </div>
 
@@ -632,6 +862,107 @@ export function GameRoom({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function RaceLobby({
+  me,
+  players,
+  readySet,
+  onToggleReady,
+  onCopyInvite,
+  copied,
+  inviteCode,
+}: {
+  me: Player;
+  players: Player[];
+  readySet: Set<string>;
+  onToggleReady: () => void;
+  onCopyInvite: () => void;
+  copied: boolean;
+  inviteCode: string | null;
+}) {
+  const meReady = readySet.has(me.id);
+  const allReady =
+    players.length > 0 && players.every((p) => readySet.has(p.id));
+  const readyCount = players.filter((p) => readySet.has(p.id)).length;
+
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl p-4">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-5">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium">
+            Race lobby
+          </div>
+          <h2 className="font-display text-2xl text-ink mt-1">
+            {allReady ? "Starting…" : "Ready up"}
+          </h2>
+          <p className="text-sm text-ink-soft mt-1">
+            {players.length < 2
+              ? "Waiting for an opponent. Share the link below."
+              : `${readyCount} of ${players.length} ready`}
+          </p>
+        </div>
+
+        <ul className="flex flex-col gap-1.5 mb-4">
+          {players.map((p) => {
+            const isReady = readySet.has(p.id);
+            return (
+              <li
+                key={p.id}
+                className="flex items-center justify-between px-3 py-2 rounded-lg border border-edge bg-paper"
+              >
+                <span className="text-sm text-ink truncate">
+                  {p.display_name}
+                  {p.id === me.id && (
+                    <span className="text-ink-faint"> (you)</span>
+                  )}
+                </span>
+                <span
+                  className={
+                    isReady
+                      ? "text-xs font-medium text-success"
+                      : "text-xs text-ink-faint"
+                  }
+                >
+                  {isReady ? "✓ Ready" : "Not ready"}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+
+        <button
+          type="button"
+          onClick={onToggleReady}
+          className={
+            meReady
+              ? "w-full py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+              : "w-full py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
+          }
+        >
+          {meReady ? "Cancel ready" : "I'm ready"}
+        </button>
+
+        <div className="mt-4 flex items-center gap-2 justify-center">
+          <button
+            type="button"
+            onClick={onCopyInvite}
+            className="text-xs text-ink-soft hover:text-ink underline-offset-2 hover:underline"
+          >
+            {copied ? "Link copied" : "Copy invite link"}
+          </button>
+          {inviteCode && (
+            <>
+              <span className="text-ink-faint text-xs">·</span>
+              <span className="font-mono text-xs px-2 py-1 rounded-md bg-paper-raised border border-edge text-ink tracking-widest">
+                {inviteCode}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
