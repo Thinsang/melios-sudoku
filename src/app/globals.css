@@ -1,26 +1,204 @@
 @import "tailwindcss";
 
+/* Class-based dark mode (toggled via next-themes' `class` strategy on <html>). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design system — "warm paper" theme.
+ * Cream surfaces, ink text, burnt sienna accent. Editorial typography.
+ * Built on raw CSS variables so dark/light is one swap and Tailwind v4 can
+ * map them into utilities via @theme inline below.
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surface */
+  --canvas: #faf6ee;          /* page background — warm cream */
+  --paper: #ffffff;           /* cards, surfaces sitting on canvas */
+  --paper-raised: #f6f1e5;    /* elevated/highlighted surfaces */
+  --paper-sunken: #f0eadc;    /* inputs, recessed areas */
+
+  /* Borders */
+  --edge: #ebe4d3;
+  --edge-strong: #d4cab1;
+
+  /* Text */
+  --ink: #1c1916;
+  --ink-soft: #6b6358;
+  --ink-faint: #a39a8a;
+
+  /* Brand & semantic */
+  --brand: #c45d3a;           /* burnt sienna */
+  --brand-hover: #b04a29;
+  --brand-soft: #f7e2d2;
+  --brand-ink: #ffffff;       /* foreground on brand bg */
+
+  --success: #5a8a4a;
+  --success-soft: #e2ead8;
+  --warning: #c99443;
+  --warning-soft: #f4e6c8;
+  --danger: #b8503f;
+  --danger-soft: #f4d8d0;
+
+  /* Game-specific (difficulty) */
+  --diff-easy: #7fa37a;
+  --diff-medium: #3e6098;
+  --diff-hard: #d89243;
+  --diff-expert: #c45d3a;
+
+  /* Sudoku cell highlights */
+  --cell-given: #1c1916;
+  --cell-user: #c45d3a;
+  --cell-selected: #f7e2d2;
+  --cell-related: #f0eadc;
+  --cell-match: #efd9c5;
+  --cell-conflict: #f4d8d0;
+  --cell-conflict-ink: #a33b2b;
+
+  /* Shadows */
+  --shadow-soft: 0 1px 2px rgba(28, 25, 22, 0.04), 0 2px 6px rgba(28, 25, 22, 0.04);
+  --shadow-lifted: 0 1px 2px rgba(28, 25, 22, 0.05), 0 8px 24px rgba(28, 25, 22, 0.08);
+}
+
+.dark {
+  --canvas: #100f0d;
+  --paper: #1a1816;
+  --paper-raised: #221f1c;
+  --paper-sunken: #161412;
+
+  --edge: #2c2926;
+  --edge-strong: #3f3a35;
+
+  --ink: #f2ede3;
+  --ink-soft: #a39e92;
+  --ink-faint: #6c665f;
+
+  --brand: #e07a56;
+  --brand-hover: #d2683e;
+  --brand-soft: #2d1e15;
+  --brand-ink: #100f0d;
+
+  --success: #87b57a;
+  --success-soft: #1f2a1d;
+  --warning: #e0a95c;
+  --warning-soft: #2b231a;
+  --danger: #d17561;
+  --danger-soft: #2c1a17;
+
+  --diff-easy: #87b57a;
+  --diff-medium: #6589c0;
+  --diff-hard: #e0a95c;
+  --diff-expert: #e07a56;
+
+  --cell-given: #f2ede3;
+  --cell-user: #e07a56;
+  --cell-selected: #3a261c;
+  --cell-related: #221f1c;
+  --cell-match: #2d2017;
+  --cell-conflict: #2c1a17;
+  --cell-conflict-ink: #e89784;
+
+  --shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lifted: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Surfaces */
+  --color-canvas: var(--canvas);
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-paper-sunken: var(--paper-sunken);
+
+  /* Edges */
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+
+  /* Text */
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-faint: var(--ink-faint);
+
+  /* Brand */
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+
+  /* Semantic */
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+
+  /* Difficulty */
+  --color-diff-easy: var(--diff-easy);
+  --color-diff-medium: var(--diff-medium);
+  --color-diff-hard: var(--diff-hard);
+  --color-diff-expert: var(--diff-expert);
+
+  /* Cell */
+  --color-cell-given: var(--cell-given);
+  --color-cell-user: var(--cell-user);
+  --color-cell-selected: var(--cell-selected);
+  --color-cell-related: var(--cell-related);
+  --color-cell-match: var(--cell-match);
+  --color-cell-conflict: var(--cell-conflict);
+  --color-cell-conflict-ink: var(--cell-conflict-ink);
+
+  /* Fonts */
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-fraunces);
+
+  /* Breakpoints */
+  --breakpoint-xs: 30rem;
+
+  /* Background defaults */
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--canvas);
+  color: var(--ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings use the display serif by default. Opt out with `font-sans`. */
+h1, h2, h3 {
+  font-family: var(--font-display), Georgia, serif;
+  letter-spacing: -0.015em;
+}
+
+/* Optical sizing for Fraunces (variable axis). */
+.font-display {
+  font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
+}
+
+/* Custom focus ring — uses brand, not the browser default. */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Subtle text selection in brand color. */
+::selection {
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+/* Mono numbers feel cleaner in tabular tables and timers. */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }
