@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
  */
 export default async function MeliosGamesHub() {
   const profile = await getCurrentProfile();
+  const greetingName = profile?.display_name ?? profile?.username ?? "Player 1";
 
   return (
     <>
@@ -17,11 +18,13 @@ export default async function MeliosGamesHub() {
 
       <main className="flex-1 flex flex-col items-center px-5 sm:px-6 py-12 sm:py-20">
         <div className="w-full max-w-4xl flex flex-col gap-14 sm:gap-20">
-          {/* Hero */}
+          {/* Greeting */}
           <section className="text-center">
-            <h1 className="font-display text-[2.75rem] sm:text-7xl leading-[1.02] tracking-tight text-ink">
-              Melio&rsquo;s{" "}
-              <em className="text-brand not-italic font-display italic">Games</em>
+            <h1 className="font-display text-[2.5rem] sm:text-6xl leading-[1.05] tracking-tight text-ink">
+              Hello,{" "}
+              <em className="text-brand not-italic font-display italic">
+                {greetingName}
+              </em>
             </h1>
           </section>
 
@@ -95,17 +98,13 @@ function HubTopBar({
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="font-display text-[1.05rem] tracking-tight font-semibold text-ink hover:text-brand transition-colors duration-75"
+          aria-label="Melio Games"
+          className="font-display text-[1.05rem] tracking-tight font-semibold text-ink hover:opacity-90 transition-opacity duration-75"
         >
-          Melio Games
+          Melio{" "}
+          <em className="text-brand not-italic font-display italic">Games</em>
         </Link>
         <nav className="flex items-center gap-1.5 sm:gap-2 text-sm">
-          <Link
-            href="/sudoku"
-            className="px-3 py-1.5 rounded-md text-ink-soft hover:text-ink hover:bg-paper-raised transition-colors duration-75"
-          >
-            Play
-          </Link>
           {profile ? (
             <>
               <Link
