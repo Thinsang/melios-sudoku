@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
+import { Avatar } from "@/components/Avatar";
 import { ChallengeButton } from "./ChallengeButton";
 
 function fmtTime(ms: number) {
@@ -23,7 +24,7 @@ export default async function PublicProfilePage({
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, display_name, created_at")
+    .select("id, username, display_name, avatar_url, created_at")
     .ilike("username", username)
     .maybeSingle();
 
@@ -97,11 +98,18 @@ export default async function PublicProfilePage({
           >
             ← Home
           </Link>
-          <div className="mt-3 flex items-baseline gap-3">
-            <h1 className="font-display text-4xl text-ink">
-              {profile.display_name ?? profile.username}
-            </h1>
-            <span className="text-ink-faint">@{profile.username}</span>
+          <div className="mt-3 flex items-center gap-4">
+            <Avatar
+              src={profile.avatar_url}
+              name={profile.display_name ?? profile.username}
+              size={56}
+            />
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-4xl text-ink leading-tight">
+                {profile.display_name ?? profile.username}
+              </h1>
+              <span className="text-ink-faint">@{profile.username}</span>
+            </div>
           </div>
           {!isMe && me && (
             <div className="mt-4 flex flex-wrap gap-2">

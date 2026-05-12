@@ -5,6 +5,7 @@ import { SettingsForms } from "./SettingsForms";
 import { AppearanceSection } from "./AppearanceSection";
 import { BoardThemeSection } from "./BoardThemeSection";
 import { SettingsBackLink } from "./SettingsBackLink";
+import { AvatarUploader } from "./AvatarUploader";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -37,6 +38,11 @@ export default async function SettingsPage() {
             </div>
           </div>
         </section>
+
+        <AvatarUploader
+          initialUrl={profile.avatar_url ?? null}
+          name={profile.display_name ?? profile.username}
+        />
 
         <AppearanceSection />
 

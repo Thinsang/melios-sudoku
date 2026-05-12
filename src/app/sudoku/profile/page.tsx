@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
 import { getUserStreak } from "@/lib/daily";
 import { EmptyState } from "@/components/EmptyState";
+import { Avatar } from "@/components/Avatar";
 import { ProfileEndGameButton } from "./ProfileEndGameButton";
 
 function fmtTime(ms: number) {
@@ -82,11 +83,18 @@ export default async function ProfilePage() {
           >
             ← Home
           </Link>
-          <div className="mt-3 flex items-baseline gap-3">
-            <h1 className="font-display text-4xl text-ink">
-              {profile.display_name ?? profile.username}
-            </h1>
-            <span className="text-ink-faint">@{profile.username}</span>
+          <div className="mt-3 flex items-center gap-4">
+            <Avatar
+              src={profile.avatar_url}
+              name={profile.display_name ?? profile.username}
+              size={56}
+            />
+            <div className="flex-1 min-w-0">
+              <h1 className="font-display text-4xl text-ink leading-tight">
+                {profile.display_name ?? profile.username}
+              </h1>
+              <span className="text-ink-faint">@{profile.username}</span>
+            </div>
           </div>
         </div>
 

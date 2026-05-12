@@ -109,6 +109,107 @@ export async function updateProfile(
   return { ok: true };
 }
 
+const ALLOWED_AVATAR_MIME = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+]);
+const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2 MB
+
+/**
+ * Upload an avatar to the `avatars` storage bucket and update the user's
+ * profile.avatar_url to point at the public URL. Stored under
+ * `<uid>/avatar.<ext>?v=<ts>` so the cache-busted public URL changes on
+ * every replace.
+ */
+export async function uploadAvatar(
+  _prev: AuthResult | null,
+  formData: FormData,
+): Promise<AuthResult> {
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose an image to upload." };
+  }
+  if (!ALLOWED_AVATAR_MIME.has(file.type)) {
+    return { error: "Use a PNG, JPEG, WebP, or GIF image." };
+  }
+  if (file.size > MAX_AVATAR_BYTES) {
+    return { error: "Image must be 2 MB or smaller." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sign in first." };
+
+  // Map the MIME type to a stable extension we control (Supabase normalizes
+  // type but storage uses our object name verbatim).
+  const ext =
+    file.type === "image/png"
+      ? "png"
+      : file.type === "image/webp"
+        ? "webp"
+        : file.type === "image/gif"
+          ? "gif"
+          : "jpg";
+  const path = `${user.id}/avatar.${ext}`;
+
+  const { error: uploadErr } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: true,
+      contentType: file.type,
+    });
+  if (uploadErr) return { error: uploadErr.message };
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("avatars").getPublicUrl(path);
+  // Cache-bust so the new image shows up everywhere immediately.
+  const url = `${publicUrl}?v=${Date.now()}`;
+
+  const { error: profileErr } = await supabase
+    .from("profiles")
+    .update({ avatar_url: url })
+    .eq("id", user.id);
+  if (profileErr) return { error: profileErr.message };
+
+  revalidatePath("/sudoku", "layout");
+  revalidatePath("/sudoku/profile");
+  return { ok: true };
+}
+
+export async function removeAvatar(): Promise<AuthResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Sign in first." };
+
+  // Best-effort cleanup of all avatar.* objects in the user's folder.
+  await supabase.storage
+    .from("avatars")
+    .remove([
+      `${user.id}/avatar.png`,
+      `${user.id}/avatar.jpg`,
+      `${user.id}/avatar.webp`,
+      `${user.id}/avatar.gif`,
+    ]);
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ avatar_url: null })
+    .eq("id", user.id);
+  if (error) return { error: error.message };
+
+  revalidatePath("/sudoku", "layout");
+  revalidatePath("/sudoku/profile");
+  return { ok: true };
+}
+
 export async function sendPasswordReset(
   _prev: AuthResult | null,
   formData: FormData

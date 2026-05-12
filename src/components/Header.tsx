@@ -6,6 +6,7 @@ import { getUserStreak } from "@/lib/daily";
 import { HeaderRealtimeWatcher } from "./HeaderRealtimeWatcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { BrandMark } from "./BrandMark";
+import { Avatar } from "./Avatar";
 
 export async function Header() {
   const profile = await getCurrentProfile();
@@ -85,9 +86,19 @@ export async function Header() {
               <NavLink href="/sudoku/friends" pendingCount={pendingCount}>
                 Friends
               </NavLink>
-              <NavLink href="/sudoku/profile">
-                {profile.display_name ?? profile.username}
-              </NavLink>
+              <Link
+                href="/sudoku/profile"
+                className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-ink-soft hover:text-ink hover:bg-paper-raised transition-colors duration-75"
+              >
+                <Avatar
+                  src={profile.avatar_url}
+                  name={profile.display_name ?? profile.username}
+                  size={22}
+                />
+                <span className="hidden sm:inline">
+                  {profile.display_name ?? profile.username}
+                </span>
+              </Link>
               <ThemeToggle />
               <Link
                 href="/sudoku/settings"

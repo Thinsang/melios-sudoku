@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/EmptyState";
+import { Avatar } from "@/components/Avatar";
 import { AddFriendForm } from "./AddFriendForm";
 import { FriendActions } from "./FriendActions";
 
@@ -10,6 +11,7 @@ interface MiniProfile {
   id: string;
   username: string;
   display_name: string | null;
+  avatar_url: string | null;
 }
 
 interface FriendshipRow {
@@ -41,25 +43,25 @@ export default async function FriendsPage() {
   const [friendsRes, incomingRes, outgoingRes, invitesRes] = await Promise.all([
     supabase
       .from("friendships")
-      .select("friend_id, created_at, profiles:friend_id (id, username, display_name)")
+      .select("friend_id, created_at, profiles:friend_id (id, username, display_name, avatar_url)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase
       .from("friend_requests")
-      .select("id, created_at, profiles:from_user (id, username, display_name)")
+      .select("id, created_at, profiles:from_user (id, username, display_name, avatar_url)")
       .eq("to_user", user.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
     supabase
       .from("friend_requests")
-      .select("id, created_at, profiles:to_user (id, username, display_name)")
+      .select("id, created_at, profiles:to_user (id, username, display_name, avatar_url)")
       .eq("from_user", user.id)
       .eq("status", "pending")
       .order("created_at", { ascending: false }),
     supabase
       .from("game_invites")
       .select(
-        "id, created_at, game_id, games (mode, difficulty), profiles:from_user (id, username, display_name)"
+        "id, created_at, game_id, games (mode, difficulty), profiles:from_user (id, username, display_name, avatar_url)"
       )
       .eq("to_user", user.id)
       .eq("status", "pending")
@@ -177,12 +179,21 @@ export default async function FriendsPage() {
                 >
                   <Link
                     href={`/sudoku/u/${f.username}`}
-                    className="flex-1 group"
+                    className="flex-1 group flex items-center gap-3 min-w-0"
                   >
-                    <div className="font-medium text-ink group-hover:text-brand transition-colors duration-75">
-                      {f.display_name ?? f.username}
+                    <Avatar
+                      src={f.avatar_url}
+                      name={f.display_name ?? f.username}
+                      size={36}
+                    />
+                    <div className="min-w-0">
+                      <div className="font-medium text-ink group-hover:text-brand transition-colors duration-75 truncate">
+                        {f.display_name ?? f.username}
+                      </div>
+                      <div className="text-sm text-ink-faint truncate">
+                        @{f.username}
+                      </div>
                     </div>
-                    <div className="text-sm text-ink-faint">@{f.username}</div>
                   </Link>
                   <FriendActions kind="friend" id={f.id} />
                 </li>
