@@ -44,8 +44,7 @@ export default function MeliosGamesHub() {
               <em className="text-brand not-italic font-display italic">Games</em>
             </h1>
             <p className="mt-5 text-base sm:text-xl text-ink-soft max-w-xl mx-auto leading-relaxed">
-              A small collection of carefully made games. No ads, no grind —
-              just good thinking and a clean board.
+              A small collection of carefully made games. Think and have fun!
             </p>
           </section>
 
