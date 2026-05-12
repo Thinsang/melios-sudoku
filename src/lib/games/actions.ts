@@ -124,8 +124,8 @@ export async function createGame(
 
   if (guestName) await setGuestNameCookie(guestName);
 
-  revalidatePath("/");
-  redirect(`/play/${game.id}`);
+  revalidatePath("/sudoku");
+  redirect(`/sudoku/play/${game.id}`);
 }
 
 export interface JoinGameResult {
@@ -223,7 +223,7 @@ export async function joinGame(
     // the client.
   }
 
-  redirect(`/play/${gameId}`);
+  redirect(`/sudoku/play/${gameId}`);
 }
 
 export async function joinByInviteCode(
@@ -243,7 +243,7 @@ export async function joinByInviteCode(
     .maybeSingle();
   if (!game) return { error: "Invite code not found." };
 
-  redirect(`/play/${game.id}`);
+  redirect(`/sudoku/play/${game.id}`);
 }
 
 export async function recordMove(
@@ -377,7 +377,7 @@ export async function finishRace(
  * Pass `redirectTo` to control where the caller is sent afterwards — by
  * default we send them home.
  */
-export async function abandonGame(gameId: string, redirectTo: string = "/") {
+export async function abandonGame(gameId: string, redirectTo: string = "/sudoku") {
   const supabase = await createClient();
   const {
     data: { user },
@@ -404,8 +404,8 @@ export async function abandonGame(gameId: string, redirectTo: string = "/") {
     .eq("id", gameId)
     .in("status", ["waiting", "active"]);
 
-  revalidatePath("/");
-  revalidatePath("/profile");
+  revalidatePath("/sudoku");
+  revalidatePath("/sudoku/profile");
   redirect(redirectTo);
 }
 

@@ -329,7 +329,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
                 Play another
               </button>
               <Link
-                href={`/leaderboard?d=${puzzle.difficulty}`}
+                href={`/sudoku/leaderboard?d=${puzzle.difficulty}`}
                 className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
               >
                 Leaderboard

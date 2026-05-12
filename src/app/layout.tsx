@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/Header";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BoardThemeProvider } from "@/components/BoardThemeProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -26,20 +25,20 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Melio's Sudoku",
-    template: "%s · Melio's Sudoku",
+    default: "Melio's Games",
+    template: "%s · Melio's Games",
   },
-  description: "Sudoku — solo, co-op, or race. Play online with friends.",
+  description: "A small collection of carefully made games.",
   openGraph: {
-    title: "Melio's Sudoku",
-    description: "Solo, with friends, or against them.",
+    title: "Melio's Games",
+    description: "A small collection of carefully made games.",
     type: "website",
-    siteName: "Melio's Sudoku",
+    siteName: "Melio's Games",
   },
   twitter: {
     card: "summary",
-    title: "Melio's Sudoku",
-    description: "Solo, with friends, or against them.",
+    title: "Melio's Games",
+    description: "A small collection of carefully made games.",
   },
   robots: {
     index: true,
@@ -56,6 +55,11 @@ export const viewport: Viewport = {
   ],
 };
 
+/**
+ * Root layout. Wraps every route — both the Melio's Games hub at `/` and
+ * the sudoku app under `/sudoku/*`. Holds only providers + analytics so
+ * each section can ship its own chrome (header, footer).
+ */
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,10 +73,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-canvas text-ink">
         <ThemeProvider>
-          <BoardThemeProvider>
-            <Header />
-            {children}
-          </BoardThemeProvider>
+          <BoardThemeProvider>{children}</BoardThemeProvider>
         </ThemeProvider>
         <SpeedInsights />
         <Analytics />

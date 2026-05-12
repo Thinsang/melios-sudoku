@@ -31,30 +31,40 @@ export async function Header() {
     <header className="w-full border-b border-edge bg-canvas/80 backdrop-blur supports-[backdrop-filter]:bg-canvas/70 sticky top-0 z-30">
       {profile && <HeaderRealtimeWatcher userId={profile.id} />}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-        <Link
-          href="/"
-          className="group flex items-center gap-2.5 text-ink hover:text-brand transition-colors duration-75"
-        >
-          <span className="text-brand">
-            <BrandMark size={18} />
-          </span>
-          <span className="font-display text-[1.05rem] tracking-tight font-semibold">
-            Melio&rsquo;s Sudoku
-          </span>
-        </Link>
+        <div className="flex items-center gap-2 text-sm">
+          <Link
+            href="/"
+            aria-label="Melio's Games"
+            className="text-ink-faint hover:text-ink transition-colors duration-75"
+          >
+            Melio
+          </Link>
+          <span className="text-ink-faint">/</span>
+          <Link
+            href="/sudoku"
+            className="flex items-center gap-2 text-ink hover:text-brand transition-colors duration-75"
+          >
+            <span className="text-brand">
+              <BrandMark size={16} />
+            </span>
+            <span className="font-display text-[1.05rem] tracking-tight font-semibold">
+              Sudoku
+            </span>
+          </Link>
+        </div>
         <nav className="flex items-center gap-2 sm:gap-3 text-sm">
           {profile ? (
             <>
-              <NavLink href="/leaderboard">Leaderboard</NavLink>
-              <NavLink href="/friends" pendingCount={pendingCount}>
+              <NavLink href="/sudoku/leaderboard">Leaderboard</NavLink>
+              <NavLink href="/sudoku/friends" pendingCount={pendingCount}>
                 Friends
               </NavLink>
-              <NavLink href="/profile">
+              <NavLink href="/sudoku/profile">
                 {profile.display_name ?? profile.username}
               </NavLink>
               <ThemeToggle />
               <Link
-                href="/settings"
+                href="/sudoku/settings"
                 className="w-8 h-8 inline-flex items-center justify-center rounded-md text-ink-soft hover:text-ink hover:bg-paper-raised transition-colors duration-75"
                 aria-label="Settings"
                 title="Settings"
@@ -84,16 +94,16 @@ export async function Header() {
             </>
           ) : (
             <>
-              <NavLink href="/leaderboard">Leaderboard</NavLink>
+              <NavLink href="/sudoku/leaderboard">Leaderboard</NavLink>
               <ThemeToggle />
               <Link
-                href="/auth/sign-in"
+                href="/sudoku/auth/sign-in"
                 className="px-3 py-1.5 rounded-md text-ink-soft hover:text-ink hover:bg-paper-raised transition-colors duration-75"
               >
                 Sign in
               </Link>
               <Link
-                href="/auth/sign-up"
+                href="/sudoku/auth/sign-up"
                 className="px-3.5 py-1.5 rounded-md bg-ink hover:bg-ink/90 text-canvas font-medium transition-colors duration-75"
               >
                 Sign up

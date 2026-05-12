@@ -68,8 +68,13 @@ Set this **before** you sign up locally so password-reset and confirmation links
 1. **Authentication → URL Configuration**.
 2. **Site URL**: `http://localhost:3000` (we'll change this after deploy).
 3. **Redirect URLs**: add
-   - `http://localhost:3000/auth/callback`
-   - (after deploy) `https://<your-vercel-url>/auth/callback`
+   - `http://localhost:3000/sudoku/auth/callback`
+   - (after deploy) `https://<your-domain>/sudoku/auth/callback`
+
+> ⚠️ The sudoku app is mounted under `/sudoku/*` (the bare `/` is the
+> Melio's Games hub). Auth callback paths therefore live at
+> `/sudoku/auth/callback` — *not* `/auth/callback`. If you wired it up
+> before, update the existing redirect URLs in Supabase.
 
 ---
 
@@ -165,7 +170,7 @@ Now that you have a public URL, point Supabase at it.
 1. Supabase → **Authentication → URL Configuration**.
 2. **Site URL**: `https://<your-vercel-url>` (the one Vercel gave you).
 3. **Redirect URLs**: keep the localhost entries and **add**:
-   - `https://<your-vercel-url>/auth/callback`
+   - `https://<your-domain>/sudoku/auth/callback`
 4. **Save**.
 
 This is what makes:

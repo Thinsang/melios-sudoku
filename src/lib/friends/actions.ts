@@ -49,7 +49,7 @@ export async function sendFriendRequest(
     .maybeSingle();
   if (reverse) {
     await acceptFriendRequestById(reverse.id);
-    revalidatePath("/friends");
+    revalidatePath("/sudoku/friends");
     return { ok: true };
   }
 
@@ -61,7 +61,7 @@ export async function sendFriendRequest(
     );
   if (error) return { error: error.message };
 
-  revalidatePath("/friends");
+  revalidatePath("/sudoku/friends");
   return { ok: true };
 }
 
@@ -93,7 +93,7 @@ export async function acceptFriendRequest(formData: FormData) {
   const reqId = String(formData.get("request_id") ?? "");
   if (!reqId) return;
   await acceptFriendRequestById(reqId);
-  revalidatePath("/friends");
+  revalidatePath("/sudoku/friends");
 }
 
 export async function declineFriendRequest(formData: FormData) {
@@ -109,7 +109,7 @@ export async function declineFriendRequest(formData: FormData) {
     .update({ status: "declined" })
     .eq("id", reqId)
     .eq("to_user", user.id);
-  revalidatePath("/friends");
+  revalidatePath("/sudoku/friends");
 }
 
 export async function unfriend(formData: FormData) {
@@ -127,7 +127,7 @@ export async function unfriend(formData: FormData) {
     .or(
       `and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`
     );
-  revalidatePath("/friends");
+  revalidatePath("/sudoku/friends");
 }
 
 export async function challengeFriend(formData: FormData) {
@@ -139,7 +139,7 @@ export async function challengeFriend(formData: FormData) {
 
   // Forward to /new-game with prefilled mode and a friend hint, or
   // create immediately. We create immediately for simplicity.
-  redirect(`/new-game?mode=${mode}&invite=${friendId}`);
+  redirect(`/sudoku/new-game?mode=${mode}&invite=${friendId}`);
 }
 
 export async function acceptGameInvite(formData: FormData) {
@@ -162,7 +162,7 @@ export async function acceptGameInvite(formData: FormData) {
     .from("game_invites")
     .update({ status: "accepted" })
     .eq("id", inviteId);
-  redirect(`/play/${inv.game_id}`);
+  redirect(`/sudoku/play/${inv.game_id}`);
 }
 
 export async function declineGameInvite(formData: FormData) {
@@ -178,5 +178,5 @@ export async function declineGameInvite(formData: FormData) {
     .update({ status: "declined" })
     .eq("id", inviteId)
     .eq("to_user", user.id);
-  revalidatePath("/friends");
+  revalidatePath("/sudoku/friends");
 }

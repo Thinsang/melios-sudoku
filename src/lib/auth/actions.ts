@@ -12,7 +12,10 @@ export interface AuthResult {
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,20}$/;
 
-function safeNext(raw: unknown, fallback = "/"): string {
+/** Default landing for auth flows is the sudoku app, not the Melio's Games hub. */
+const AUTH_DEFAULT_NEXT = "/sudoku";
+
+function safeNext(raw: unknown, fallback = AUTH_DEFAULT_NEXT): string {
   const s = typeof raw === "string" ? raw : "";
   // Only allow same-origin paths.
   if (!s.startsWith("/") || s.startsWith("//")) return fallback;
@@ -78,7 +81,7 @@ export async function signUp(
   }
 
   // Email confirmation is off — the user is signed in immediately.
-  redirect(next === "/" ? "/?welcome=1" : next);
+  redirect(next === AUTH_DEFAULT_NEXT ? `${AUTH_DEFAULT_NEXT}?welcome=1` : next);
 }
 
 export async function updateProfile(
@@ -102,7 +105,7 @@ export async function updateProfile(
     .eq("id", user.id);
   if (error) return { error: error.message };
 
-  revalidatePath("/", "layout");
+  revalidatePath("/sudoku", "layout");
   return { ok: true };
 }
 
@@ -123,5 +126,5 @@ export async function sendPasswordReset(
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/");
+  redirect("/sudoku");
 }
