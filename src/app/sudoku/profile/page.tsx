@@ -2,8 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
-import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
+import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { getUserStreak } from "@/lib/daily";
+import { getUserWordleStreak } from "@/lib/wordle/actions";
 import { EmptyState } from "@/components/EmptyState";
 import { Avatar } from "@/components/Avatar";
 import { ProfileEndGameButton } from "./ProfileEndGameButton";
@@ -24,6 +25,7 @@ export default async function ProfilePage() {
   const supabase = await createClient();
 
   const streak = await getUserStreak(profile.id);
+  const wordleStreak = await getUserWordleStreak(profile.id);
 
   // Best daily score across all completions.
   const { data: dailyRows } = await supabase
@@ -34,6 +36,40 @@ export default async function ProfilePage() {
     .order("score", { ascending: false })
     .limit(1);
   const bestDaily = dailyRows && dailyRows.length > 0 ? dailyRows[0] : null;
+
+  // Best score and total points per difficulty.
+  const { data: allScores } = await supabase
+    .from("scores")
+    .select("difficulty, score")
+    .eq("user_id", profile.id);
+  const bestScoreByDifficulty: Record<string, number> = {};
+  let totalPoints = 0;
+  let totalScoredGames = 0;
+  for (const row of allScores ?? []) {
+    const d = row.difficulty as string;
+    totalPoints += row.score;
+    totalScoredGames++;
+    if (!(d in bestScoreByDifficulty) || row.score > bestScoreByDifficulty[d]) {
+      bestScoreByDifficulty[d] = row.score;
+    }
+  }
+
+  // Wordle: total played, wins, distribution
+  const { data: wordleRows } = await supabase
+    .from("wordle_results")
+    .select("guesses, won")
+    .eq("user_id", profile.id);
+  const wordleStats = {
+    played: wordleRows?.length ?? 0,
+    wins: (wordleRows ?? []).filter((r) => r.won).length,
+    distribution: [0, 0, 0, 0, 0, 0],
+  };
+  for (const r of wordleRows ?? []) {
+    if (r.won && r.guesses >= 1 && r.guesses <= 6) {
+      wordleStats.distribution[r.guesses - 1]++;
+    }
+  }
+  const wordleMaxDist = Math.max(1, ...wordleStats.distribution);
 
   const { data: rows } = await supabase
     .from("game_players")
@@ -98,48 +134,25 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        <Section title="Daily">
-          <Link
-            href="/sudoku/daily"
-            className="group block rounded-xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] transition-all duration-100 p-4 sm:p-5"
-          >
-            <div className="flex items-center gap-4 flex-wrap">
-              <div className="shrink-0 w-12 h-12 rounded-full bg-warning-soft text-warning flex items-center justify-center text-xl">
-                🔥
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2 flex-wrap">
-                  <div className="font-display text-2xl text-ink tabular-nums leading-tight">
-                    {streak.current} {streak.current === 1 ? "day" : "days"}
-                  </div>
-                  <span className="text-xs text-ink-faint">
-                    current streak · best {streak.longest}
-                  </span>
-                </div>
-                <div className="text-sm text-ink-soft mt-0.5">
-                  {streak.completedToday ? (
-                    <span className="text-success font-medium">
-                      ✓ Today done — streak locked in
-                    </span>
-                  ) : streak.current > 0 ? (
-                    "Solve today's puzzle to extend it."
-                  ) : (
-                    "Start a streak by solving today's puzzle."
-                  )}
-                </div>
-              </div>
-              {bestDaily && (
-                <div className="text-right shrink-0">
-                  <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
-                    Best daily
-                  </div>
-                  <div className="font-display text-lg text-brand tabular-nums">
-                    {bestDaily.score.toLocaleString()}
-                  </div>
-                </div>
-              )}
-            </div>
-          </Link>
+        <Section title="Daily streaks">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <StreakCard
+              href="/sudoku/daily"
+              title="Sudoku"
+              current={streak.current}
+              longest={streak.longest}
+              completedToday={streak.completedToday}
+              bestScore={bestDaily?.score ?? null}
+            />
+            <StreakCard
+              href="/wordle"
+              title="Wordle"
+              current={wordleStreak.current}
+              longest={wordleStreak.longest}
+              completedToday={wordleStreak.completedToday}
+              bestScore={null}
+            />
+          </div>
         </Section>
 
         <Section title="Stats">
@@ -151,32 +164,83 @@ export default async function ProfilePage() {
               value={total === 0 ? "—" : `${Math.round((completed / total) * 100)}%`}
             />
             <Stat
-              label="Total time"
-              value={fmtTime(
-                all.reduce((acc, r) => acc + (r.finish_time_ms ?? 0), 0)
-              )}
+              label="Total points"
+              value={
+                totalScoredGames > 0 ? totalPoints.toLocaleString() : "—"
+              }
               mono
             />
           </div>
         </Section>
 
-        <Section title="Best times">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <Section title="By difficulty">
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
             {DIFFICULTIES.map((d) => (
               <div
                 key={d}
                 className="p-4 rounded-xl border border-edge bg-paper"
               >
-                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
-                  {DIFFICULTY_LABEL[d]}
+                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium flex items-center gap-1.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: `var(--diff-${d})` }}
+                    aria-hidden
+                  />
+                  {DIFFICULTY_LABEL[d as Difficulty]}
                 </div>
                 <div className="text-lg font-mono tabular-nums text-ink mt-1.5">
                   {bestByDifficulty[d] ? fmtTime(bestByDifficulty[d]) : "—"}
+                </div>
+                <div className="text-xs text-ink-soft mt-0.5 tabular-nums">
+                  {bestScoreByDifficulty[d]
+                    ? `${bestScoreByDifficulty[d].toLocaleString()} pts`
+                    : "—"}
                 </div>
               </div>
             ))}
           </div>
         </Section>
+
+        {/* Wordle distribution — only shown when the user has any wordle history */}
+        {wordleStats.played > 0 && (
+          <Section title="Wordle guesses">
+            <div className="rounded-xl border border-edge bg-paper p-4 sm:p-5">
+              <div className="text-xs text-ink-soft mb-3">
+                {wordleStats.wins} / {wordleStats.played} solved ·{" "}
+                <span className="text-ink">
+                  {Math.round((wordleStats.wins / wordleStats.played) * 100)}%
+                </span>{" "}
+                win rate
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {wordleStats.distribution.map((count, i) => {
+                  const pct = (count / wordleMaxDist) * 100;
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <div className="w-3 text-ink-faint font-mono tabular-nums shrink-0">
+                        {i + 1}
+                      </div>
+                      <div className="flex-1 h-5 rounded bg-paper-raised relative overflow-hidden">
+                        <div
+                          className={
+                            "h-full rounded transition-all duration-300 " +
+                            (count > 0 ? "bg-brand" : "bg-paper-raised")
+                          }
+                          style={{ width: `${Math.max(pct, count > 0 ? 8 : 0)}%` }}
+                        />
+                        {count > 0 && (
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] font-medium text-brand-ink tabular-nums">
+                            {count}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Section>
+        )}
 
         <Section title="Recent games">
           {recent.length === 0 ? (
@@ -261,6 +325,65 @@ function Section({
       <h2 className="font-display text-lg text-ink mb-3.5">{title}</h2>
       {children}
     </section>
+  );
+}
+
+function StreakCard({
+  title,
+  href,
+  current,
+  longest,
+  completedToday,
+  bestScore,
+}: {
+  title: string;
+  href: string;
+  current: number;
+  longest: number;
+  completedToday: boolean;
+  bestScore: number | null;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group block rounded-xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] transition-all duration-100 p-4"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={
+            "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg " +
+            (completedToday
+              ? "bg-success/15 text-success"
+              : "bg-warning-soft text-warning")
+          }
+        >
+          {completedToday ? "✓" : "🔥"}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+            {title}
+          </div>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span className="font-display text-xl text-ink tabular-nums leading-none">
+              {current}
+            </span>
+            <span className="text-xs text-ink-soft">
+              {current === 1 ? "day" : "days"} · best {longest}
+            </span>
+          </div>
+        </div>
+        {bestScore != null && (
+          <div className="text-right shrink-0">
+            <div className="text-[9px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+              Best
+            </div>
+            <div className="font-display text-base text-brand tabular-nums">
+              {bestScore.toLocaleString()}
+            </div>
+          </div>
+        )}
+      </div>
+    </Link>
   );
 }
 
