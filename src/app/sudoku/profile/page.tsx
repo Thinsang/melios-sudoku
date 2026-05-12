@@ -20,9 +20,25 @@ function fmtTime(ms: number) {
   return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }
 
-export default async function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ mode?: string; d?: string }>;
+}) {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/sudoku/auth/sign-in?next=/sudoku/profile");
+
+  const { mode: modeFilterRaw, d: diffFilterRaw } = await searchParams;
+  const modeFilter =
+    modeFilterRaw === "solo" ||
+    modeFilterRaw === "race" ||
+    modeFilterRaw === "coop"
+      ? modeFilterRaw
+      : null;
+  const diffFilter =
+    diffFilterRaw && (DIFFICULTIES as readonly string[]).includes(diffFilterRaw)
+      ? diffFilterRaw
+      : null;
 
   const supabase = await createClient();
 
@@ -101,6 +117,15 @@ export default async function ProfilePage() {
   const total = all.length;
   const completed = all.filter((r) => r.finished_at).length;
 
+  // Apply filters to the "recent" slice only — top-line stats stay
+  // computed across all games for stable counters.
+  const filtered = all.filter((r) => {
+    if (!r.games) return false;
+    if (modeFilter && r.games.mode !== modeFilter) return false;
+    if (diffFilter && r.games.difficulty !== diffFilter) return false;
+    return true;
+  });
+
   const bestByDifficulty: Record<string, number> = {};
   for (const r of all) {
     if (!r.finished_at || !r.finish_time_ms || !r.games) continue;
@@ -110,7 +135,8 @@ export default async function ProfilePage() {
     }
   }
 
-  const recent = all.slice(0, 8);
+  const recent = filtered.slice(0, 8);
+  const anyFilter = Boolean(modeFilter || diffFilter);
 
   return (
     <main className="flex flex-1 justify-center px-5 sm:px-6 py-10">
@@ -250,27 +276,45 @@ export default async function ProfilePage() {
         </Section>
 
         <Section title="Recent games">
+          <RecentFilters
+            modeFilter={modeFilter}
+            diffFilter={diffFilter}
+            anyFilter={anyFilter}
+          />
           {recent.length === 0 ? (
-            <EmptyState
-              icon={
-                <svg
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+            anyFilter ? (
+              <p className="text-sm text-ink-soft border border-dashed border-edge-strong bg-paper rounded-xl p-5 text-center">
+                No matching games.{" "}
+                <Link
+                  href="/sudoku/profile"
+                  className="text-brand hover:underline"
                 >
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
-                </svg>
-              }
-              title="No games yet"
-              description="Pick a difficulty or jump into today's daily puzzle — your finished games show up here."
-              action={{ label: "Play sudoku", href: "/sudoku" }}
-            />
+                  Clear filters
+                </Link>
+                .
+              </p>
+            ) : (
+              <EmptyState
+                icon={
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <path d="M9 3v18M15 3v18M3 9h18M3 15h18" />
+                  </svg>
+                }
+                title="No games yet"
+                description="Pick a difficulty or jump into today's daily puzzle — your finished games show up here."
+                action={{ label: "Play sudoku", href: "/sudoku" }}
+              />
+            )
           ) : (
             <ul className="flex flex-col gap-2">
               {recent.map((r) => {
@@ -332,6 +376,94 @@ function Section({
       <h2 className="font-display text-lg text-ink mb-3.5">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * URL-driven filter pills for "Recent games". Each pill is a Link that
+ * toggles its corresponding searchParam — clicking the active pill
+ * clears that filter; clicking an inactive one sets it (preserving the
+ * other dimension's state).
+ */
+function RecentFilters({
+  modeFilter,
+  diffFilter,
+  anyFilter,
+}: {
+  modeFilter: "solo" | "race" | "coop" | null;
+  diffFilter: string | null;
+  anyFilter: boolean;
+}) {
+  function buildHref(next: { mode?: string | null; d?: string | null }) {
+    const params = new URLSearchParams();
+    const m = next.mode === undefined ? modeFilter : next.mode;
+    const d = next.d === undefined ? diffFilter : next.d;
+    if (m) params.set("mode", m);
+    if (d) params.set("d", d);
+    const qs = params.toString();
+    return qs ? `/sudoku/profile?${qs}` : "/sudoku/profile";
+  }
+
+  const modePill = (
+    label: string,
+    value: "solo" | "race" | "coop" | null,
+  ) => {
+    const active = modeFilter === value;
+    return (
+      <Link
+        key={String(value)}
+        href={buildHref({ mode: active ? null : value })}
+        aria-pressed={active}
+        className={
+          "px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
+          (active
+            ? "border-brand bg-brand text-brand-ink"
+            : "border-edge bg-paper text-ink-soft hover:text-ink hover:border-edge-strong")
+        }
+      >
+        {label}
+      </Link>
+    );
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 mb-3">
+      <span className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium mr-1">
+        Mode
+      </span>
+      {modePill("Solo", "solo")}
+      {modePill("Race", "race")}
+      {modePill("Co-op", "coop")}
+      <span className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium ml-2 mr-1">
+        Difficulty
+      </span>
+      {DIFFICULTIES.map((diff) => {
+        const active = diffFilter === diff;
+        return (
+          <Link
+            key={diff}
+            href={buildHref({ d: active ? null : diff })}
+            aria-pressed={active}
+            className={
+              "px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
+              (active
+                ? "border-brand bg-brand text-brand-ink"
+                : "border-edge bg-paper text-ink-soft hover:text-ink hover:border-edge-strong")
+            }
+          >
+            {DIFFICULTY_LABEL[diff]}
+          </Link>
+        );
+      })}
+      {anyFilter && (
+        <Link
+          href="/sudoku/profile"
+          className="ml-auto text-xs text-ink-faint hover:text-ink hover:underline"
+        >
+          Clear
+        </Link>
+      )}
+    </div>
   );
 }
 
