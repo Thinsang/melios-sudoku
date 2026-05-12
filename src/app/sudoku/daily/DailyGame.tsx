@@ -16,6 +16,7 @@ import { useBoardTheme } from "@/components/BoardThemeProvider";
 import { SudokuBoard } from "@/components/sudoku/SudokuBoard";
 import { NumberPad } from "@/components/sudoku/NumberPad";
 import { BoardDecoration } from "@/components/sudoku/BoardDecoration";
+import { ShareButton } from "@/components/ShareButton";
 
 function fmtTime(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -23,6 +24,43 @@ function fmtTime(ms: number) {
   const sec = s % 60;
   const pad = (n: number) => n.toString().padStart(2, "0");
   return `${m}:${pad(sec)}`;
+}
+
+/**
+ * Build a multi-line share string for the daily-completion modal. Format
+ * mirrors Wordle's: title + score line + stat row + url.
+ *
+ *   Melio Sudoku Daily 2026-05-12 — Hard
+ *   ★ 1,847
+ *   ⏱️ 6:42 · ✕ 2 · 💡 1
+ *   meliogames.com/sudoku/daily
+ */
+function buildDailyShareText({
+  date,
+  difficulty,
+  score,
+  elapsedMs,
+  mistakes,
+  hintsUsed,
+}: {
+  date: string;
+  difficulty: Difficulty;
+  score: number;
+  elapsedMs: number;
+  mistakes: number;
+  hintsUsed: number;
+}) {
+  const label = DIFFICULTY_LABEL[difficulty];
+  const statLine =
+    `⏱️ ${fmtTime(elapsedMs)} · ✕ ${mistakes}` +
+    (hintsUsed > 0 ? ` · 💡 ${hintsUsed}` : "");
+  return [
+    `Melio Sudoku Daily ${date} — ${label}`,
+    `★ ${score.toLocaleString()}`,
+    statLine,
+    "",
+    "meliogames.com/sudoku/daily",
+  ].join("\n");
 }
 
 interface ExistingScore {
@@ -363,9 +401,23 @@ function ActiveDaily({
               )}
             </div>
             <div className="flex gap-2.5 justify-center flex-wrap">
+              {recordResult?.score != null && (
+                <ShareButton
+                  title="Melio Sudoku Daily"
+                  label="Share"
+                  text={buildDailyShareText({
+                    date,
+                    difficulty,
+                    score: recordResult.score,
+                    elapsedMs: game.state.elapsedMs,
+                    mistakes: game.state.mistakes,
+                    hintsUsed: game.state.hintsUsed,
+                  })}
+                />
+              )}
               <Link
                 href="/sudoku"
-                className="px-5 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
+                className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
               >
                 Free play
               </Link>

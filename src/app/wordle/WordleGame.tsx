@@ -13,6 +13,7 @@ import {
   type ScoredLetter,
 } from "@/lib/wordle";
 import { useToast } from "@/components/toast/ToastProvider";
+import { ShareButton } from "@/components/ShareButton";
 import { recordWordleCompletion } from "@/lib/wordle/actions";
 
 interface Persisted {
@@ -416,9 +417,6 @@ function GameOverCard({
   date: string;
   scoredHistory: ScoredLetter[][];
 }) {
-  const { push } = useToast();
-  const [sharing, setSharing] = useState(false);
-
   const shareText = useMemo(() => {
     const score = won ? `${guesses}/${MAX_GUESSES}` : `X/${MAX_GUESSES}`;
     const grid = scoredHistory
@@ -432,49 +430,6 @@ function GameOverCard({
       .join("\n");
     return `Melio Wordle ${date} ${score}\n\n${grid}\n\nmeliogames.com/wordle`;
   }, [scoredHistory, won, guesses, date]);
-
-  async function handleShare() {
-    setSharing(true);
-    try {
-      // Prefer the native share sheet if it's a real browser implementation
-      // (not all desktop browsers expose one).
-      if (
-        typeof navigator !== "undefined" &&
-        typeof navigator.share === "function"
-      ) {
-        try {
-          await navigator.share({
-            title: "Melio Wordle",
-            text: shareText,
-          });
-          return;
-        } catch (err) {
-          // User dismissed — silent. Other failures fall through to clipboard.
-          if (err instanceof Error && err.name === "AbortError") return;
-        }
-      }
-      if (
-        typeof navigator !== "undefined" &&
-        navigator.clipboard?.writeText
-      ) {
-        await navigator.clipboard.writeText(shareText);
-        push({
-          title: "Copied to clipboard",
-          description: "Paste it anywhere to share your grid.",
-          variant: "success",
-          duration: 2500,
-        });
-      } else {
-        push({
-          title: "Couldn't copy",
-          description: "Your browser blocked clipboard access.",
-          variant: "danger",
-        });
-      }
-    } finally {
-      setSharing(false);
-    }
-  }
 
   return (
     <div
@@ -499,30 +454,12 @@ function GameOverCard({
         Come back tomorrow for the next puzzle.
       </div>
       <div className="mt-3 flex justify-center gap-2 flex-wrap">
-        <button
-          type="button"
-          onClick={handleShare}
-          disabled={sharing}
+        <ShareButton
+          title="Melio Wordle"
+          label="Share"
+          text={shareText}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-brand hover:bg-brand-hover disabled:opacity-50 text-brand-ink text-sm font-medium transition-colors duration-75"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="18" cy="5" r="3" />
-            <circle cx="6" cy="12" r="3" />
-            <circle cx="18" cy="19" r="3" />
-            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
-            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
-          </svg>
-          {sharing ? "Sharing…" : "Share"}
-        </button>
+        />
         <Link
           href="/sudoku/daily"
           className="px-3.5 py-1.5 rounded-md border border-edge bg-paper text-ink hover:bg-paper-raised text-sm font-medium transition-colors duration-75"
