@@ -2,8 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
-import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
+import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { Avatar } from "@/components/Avatar";
+import { getUserStreak } from "@/lib/daily";
+import { getUserWordleStreak } from "@/lib/wordle/actions";
 import { ChallengeButton } from "./ChallengeButton";
 
 function fmtTime(ms: number) {
@@ -88,6 +90,46 @@ export default async function PublicProfilePage({
     }
   }
 
+  // Best score per difficulty (public — uses scores table).
+  const { data: scoreRows } = await supabase
+    .from("scores")
+    .select("difficulty, score")
+    .eq("user_id", profile.id);
+  const bestScoreByDifficulty: Record<string, number> = {};
+  for (const r of scoreRows ?? []) {
+    const d = r.difficulty as string;
+    if (
+      !(d in bestScoreByDifficulty) ||
+      r.score > bestScoreByDifficulty[d]
+    ) {
+      bestScoreByDifficulty[d] = r.score;
+    }
+  }
+
+  // Streaks across both games — public stats.
+  const [sudokuStreak, wordleStreak] = await Promise.all([
+    getUserStreak(profile.id),
+    getUserWordleStreak(profile.id),
+  ]);
+
+  // Best daily sudoku score
+  const { data: bestDailyRows } = await supabase
+    .from("scores")
+    .select("score")
+    .eq("user_id", profile.id)
+    .not("daily_date", "is", null)
+    .order("score", { ascending: false })
+    .limit(1);
+  const bestDailyScore = bestDailyRows?.[0]?.score ?? null;
+
+  // Wordle aggregate
+  const { data: wordleRows } = await supabase
+    .from("wordle_results")
+    .select("won")
+    .eq("user_id", profile.id);
+  const wordlePlayed = wordleRows?.length ?? 0;
+  const wordleWins = (wordleRows ?? []).filter((r) => r.won).length;
+
   return (
     <main className="flex flex-1 justify-center px-5 sm:px-6 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-10">
@@ -133,28 +175,99 @@ export default async function PublicProfilePage({
           )}
         </div>
 
+        {/* Streak badges — only shown if there's any streak history */}
+        {(sudokuStreak.longest > 0 || wordleStreak.longest > 0) && (
+          <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-edge bg-paper p-4 flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-warning-soft text-warning flex items-center justify-center text-lg">
+                🔥
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+                  Sudoku streak
+                </div>
+                <div className="font-display text-lg text-ink tabular-nums">
+                  {sudokuStreak.current}
+                  <span className="text-sm text-ink-soft font-sans font-normal">
+                    {" "}· best {sudokuStreak.longest}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-xl border border-edge bg-paper p-4 flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-warning-soft text-warning flex items-center justify-center text-lg">
+                🔥
+              </div>
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+                  Wordle streak
+                </div>
+                <div className="font-display text-lg text-ink tabular-nums">
+                  {wordleStreak.current}
+                  <span className="text-sm text-ink-soft font-sans font-normal">
+                    {" "}· best {wordleStreak.longest}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section>
-          <h2 className="font-display text-lg text-ink mb-3.5">Best times</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <h2 className="font-display text-lg text-ink mb-3.5">
+            By difficulty
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
             {DIFFICULTIES.map((d) => (
               <div
                 key={d}
                 className="p-4 rounded-xl border border-edge bg-paper"
               >
-                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
-                  {DIFFICULTY_LABEL[d]}
+                <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium flex items-center gap-1.5">
+                  <span
+                    className="w-1.5 h-1.5 rounded-full"
+                    style={{ backgroundColor: `var(--diff-${d})` }}
+                    aria-hidden
+                  />
+                  {DIFFICULTY_LABEL[d as Difficulty]}
                 </div>
                 <div className="text-lg font-mono tabular-nums text-ink mt-1.5">
                   {bestByDifficulty[d] ? fmtTime(bestByDifficulty[d]) : "—"}
+                </div>
+                <div className="text-xs text-ink-soft mt-0.5 tabular-nums">
+                  {bestScoreByDifficulty[d]
+                    ? `${bestScoreByDifficulty[d].toLocaleString()} pts`
+                    : "—"}
                 </div>
               </div>
             ))}
           </div>
         </section>
 
-        <p className="text-sm text-ink-faint">
-          {completed.length} puzzle{completed.length === 1 ? "" : "s"} solved.
-        </p>
+        <section className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-faint">
+          <span>
+            <span className="text-ink font-medium tabular-nums">
+              {completed.length}
+            </span>{" "}
+            sudoku{completed.length === 1 ? "" : "s"} solved
+          </span>
+          {bestDailyScore != null && (
+            <span>
+              Best daily score{" "}
+              <span className="text-brand font-medium tabular-nums">
+                {bestDailyScore.toLocaleString()}
+              </span>
+            </span>
+          )}
+          {wordlePlayed > 0 && (
+            <span>
+              <span className="text-ink font-medium tabular-nums">
+                {wordleWins}
+              </span>
+              /{wordlePlayed} wordles solved
+            </span>
+          )}
+        </section>
       </div>
     </main>
   );
