@@ -6,6 +6,7 @@ import { AppearanceSection } from "./AppearanceSection";
 import { BoardThemeSection } from "./BoardThemeSection";
 import { SettingsBackLink } from "./SettingsBackLink";
 import { AvatarUploader } from "./AvatarUploader";
+import { ReplayTutorialButton } from "./ReplayTutorialButton";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -52,6 +53,8 @@ export default async function SettingsPage() {
           email={user?.email ?? ""}
           initialDisplayName={profile.display_name ?? profile.username}
         />
+
+        <ReplayTutorialButton />
       </div>
     </main>
   );

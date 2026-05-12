@@ -7,6 +7,7 @@ import {
   getUserStreak,
   todayKey,
 } from "@/lib/daily";
+import { FirstTimeTutorial } from "@/components/sudoku/FirstTimeTutorial";
 import { JoinByCodeForm } from "./JoinByCodeForm";
 
 // Schema.org structured data for the sudoku app — declared as a VideoGame
@@ -123,6 +124,7 @@ export default async function Home({
           __html: JSON.stringify(SUDOKU_STRUCTURED_DATA),
         }}
       />
+      <FirstTimeTutorial />
       <div className="w-full max-w-3xl flex flex-col gap-12">
         {showWelcome && (
           <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 flex items-center gap-3 -mb-4">
