@@ -26,7 +26,7 @@ const DIFFICULTY_BLURB: Record<Difficulty, string> = {
   medium: "Balanced and steady.",
   hard: "Real chains and pairs.",
   expert: "For the truly fearless.",
-  extreme: "17-21 clues. The hardest sudoku math allows.",
+  extreme: "The hardest sudoku math allows.",
 };
 
 export function SoloGame({ difficulty }: { difficulty: Difficulty }) {
