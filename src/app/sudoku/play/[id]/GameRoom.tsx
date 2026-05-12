@@ -30,6 +30,7 @@ import { BoardDecoration } from "@/components/sudoku/BoardDecoration";
 import { useBoardTheme } from "@/components/BoardThemeProvider";
 import { finishCoop, finishRace, recordMove, startRace } from "@/lib/games/actions";
 import { EndGameButton } from "./EndGameButton";
+import { CoopChat, type ChatMessage } from "./CoopChat";
 
 type Game = Database["public"]["Tables"]["games"]["Row"];
 type Player = Database["public"]["Tables"]["game_players"]["Row"];
@@ -79,6 +80,8 @@ export function GameRoom({
   const [cellLocks, setCellLocks] = useState<
     Record<number, { playerId: string; name: string }>
   >({});
+  // Ephemeral coop chat. Lives only in-channel; not persisted.
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   const [selected, setSelected] = useState<number | null>(null);
   const [noteMode, setNoteMode] = useState(false);
@@ -311,6 +314,32 @@ export function GameRoom({
           return n;
         });
       })
+      .on("broadcast", { event: "chat" }, ({ payload }) => {
+        if (g0.mode !== "coop") return;
+        if (!payload || typeof payload !== "object") return;
+        const p = payload as {
+          id?: string;
+          player_id?: string;
+          name?: string;
+          body?: string;
+          at?: number;
+        };
+        if (!p.id || !p.player_id || !p.name || !p.body) return;
+        if (p.body.length > 280) return;
+        setChatMessages((cur) => {
+          if (cur.some((m) => m.id === p.id)) return cur;
+          const next: ChatMessage = {
+            id: p.id!,
+            playerId: p.player_id!,
+            name: p.name!,
+            body: p.body!,
+            at: p.at ?? Date.now(),
+          };
+          // Cap history at 200 messages.
+          const all = [...cur, next];
+          return all.length > 200 ? all.slice(all.length - 200) : all;
+        });
+      })
       .on("broadcast", { event: "cell_lock" }, ({ payload }) => {
         if (!payload || typeof payload !== "object") return;
         const { player_id, name, cell_index } = payload as {
@@ -338,6 +367,40 @@ export function GameRoom({
       channelRef.current = null;
     };
   }, [supabase, game.id, me.id, g0.mode]);
+
+  // Send a coop chat message. Append optimistically + broadcast so peers
+  // get it. Server-side moderation is intentionally minimal (length cap).
+  const sendChat = useCallback(
+    (body: string) => {
+      const trimmed = body.trim();
+      if (!trimmed || trimmed.length > 280) return;
+      const ch = channelRef.current;
+      if (!ch) return;
+      const msg: ChatMessage = {
+        id: `${me.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        playerId: me.id,
+        name: me.display_name,
+        body: trimmed,
+        at: Date.now(),
+      };
+      setChatMessages((cur) => {
+        const all = [...cur, msg];
+        return all.length > 200 ? all.slice(all.length - 200) : all;
+      });
+      void ch.send({
+        type: "broadcast",
+        event: "chat",
+        payload: {
+          id: msg.id,
+          player_id: msg.playerId,
+          name: msg.name,
+          body: msg.body,
+          at: msg.at,
+        },
+      });
+    },
+    [me.id, me.display_name],
+  );
 
   // Broadcast cell lock on selection change (coop only)
   useEffect(() => {
@@ -861,7 +924,17 @@ export function GameRoom({
                 )}
               </div>
             </div>
-          ) : (
+          ) : null}
+
+          {game.mode === "coop" && (
+            <CoopChat
+              messages={chatMessages}
+              onSend={sendChat}
+              meId={me.id}
+            />
+          )}
+
+          {game.mode !== "coop" && (
             // Race / solo-saved: per-player progress bars.
             <div className="rounded-2xl border border-edge bg-paper p-4">
               <div className="font-display text-base text-ink mb-3">
