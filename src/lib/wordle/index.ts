@@ -99,3 +99,67 @@ export function letterStates(
   }
   return out;
 }
+
+/**
+ * Hard-mode validator. A guess passes when it uses every previously-
+ * revealed clue:
+ *   - "correct" letters stay in the same position
+ *   - "present" letters must appear somewhere in the new guess
+ *     (at least as many times as they've been confirmed)
+ *
+ * Returns a human-readable reason if the guess fails, or null on pass.
+ */
+export function hardModeViolation(
+  history: ScoredLetter[][],
+  guess: string,
+): string | null {
+  const g = guess.toLowerCase();
+  if (g.length !== WORD_LENGTH) return null;
+  if (history.length === 0) return null;
+
+  // 1. Position constraints from any "correct" hit.
+  for (const row of history) {
+    for (let i = 0; i < WORD_LENGTH; i++) {
+      const cell = row[i];
+      if (cell.state === "correct" && g[i] !== cell.letter) {
+        return `${ordinal(i + 1)} letter must be ${cell.letter.toUpperCase()}.`;
+      }
+    }
+  }
+
+  // 2. Presence constraints. For each row, for each letter, the count
+  // of (correct OR present) appearances in that row is a lower bound
+  // on how many times that letter must appear in any subsequent guess.
+  // We use the max across all history rows so the constraint never
+  // weakens once it's established.
+  const required: Record<string, number> = {};
+  for (const row of history) {
+    const rowCounts: Record<string, number> = {};
+    for (const cell of row) {
+      if (cell.state === "correct" || cell.state === "present") {
+        rowCounts[cell.letter] = (rowCounts[cell.letter] ?? 0) + 1;
+      }
+    }
+    for (const [letter, c] of Object.entries(rowCounts)) {
+      if (c > (required[letter] ?? 0)) required[letter] = c;
+    }
+  }
+
+  const guessCounts: Record<string, number> = {};
+  for (const c of g) guessCounts[c] = (guessCounts[c] ?? 0) + 1;
+  for (const [letter, need] of Object.entries(required)) {
+    if ((guessCounts[letter] ?? 0) < need) {
+      return need === 1
+        ? `Guess must contain ${letter.toUpperCase()}.`
+        : `Guess must contain ${need} ${letter.toUpperCase()}s.`;
+    }
+  }
+
+  return null;
+}
+
+function ordinal(n: number): string {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}

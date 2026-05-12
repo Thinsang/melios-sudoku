@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { SiteFooter } from "@/components/SiteFooter";
+import { KeyboardHelp } from "@/components/sudoku/KeyboardHelp";
 
 /**
  * Layout for the sudoku section. Adds the sudoku Header (with Friends,
@@ -54,6 +55,7 @@ export default function SudokuLayout({
     <>
       <Header />
       {children}
+      <KeyboardHelp />
       <SiteFooter />
     </>
   );

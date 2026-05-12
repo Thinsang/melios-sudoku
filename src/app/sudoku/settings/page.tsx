@@ -7,6 +7,7 @@ import { BoardThemeSection } from "./BoardThemeSection";
 import { SettingsBackLink } from "./SettingsBackLink";
 import { AvatarUploader } from "./AvatarUploader";
 import { ReplayTutorialButton } from "./ReplayTutorialButton";
+import { KeyboardSection } from "./KeyboardSection";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -55,6 +56,8 @@ export default async function SettingsPage() {
         />
 
         <ReplayTutorialButton />
+
+        <KeyboardSection />
       </div>
     </main>
   );

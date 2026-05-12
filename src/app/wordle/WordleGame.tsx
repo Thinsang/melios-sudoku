@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   MAX_GUESSES,
   WORD_LENGTH,
+  hardModeViolation,
   isValidGuess,
   letterStates,
   scoreGuess,
@@ -23,6 +24,7 @@ interface Persisted {
 
 const STORAGE_PREFIX = "melio_wordle_";
 const STATS_KEY = "melio_wordle_stats_v1";
+const HARD_MODE_KEY = "melio_wordle_hard_v1";
 
 interface Stats {
   played: number;
@@ -60,6 +62,9 @@ export function WordleGame({
   const [stats, setStats] = useState<Stats>(EMPTY_STATS);
   const [hydrated, setHydrated] = useState(false);
   const [shake, setShake] = useState(false);
+  // Hard mode: revealed clues must be reused in every subsequent guess.
+  // Locked once the user submits a guess — can't be toggled mid-game.
+  const [hardMode, setHardMode] = useState(false);
 
   // Load persisted state on mount. localStorage isn't available during
   // SSR so we must read it post-mount — the "no setState in effect" rule
@@ -85,6 +90,11 @@ export function WordleGame({
       setGuesses(loaded.guesses);
       setDone(loaded.done);
       setWon(loaded.won);
+    }
+    try {
+      setHardMode(window.localStorage.getItem(HARD_MODE_KEY) === "1");
+    } catch {
+      // ignore
     }
     setStats(loadedStats);
     setHydrated(true);
@@ -134,6 +144,20 @@ export function WordleGame({
       });
       return;
     }
+    if (hardMode) {
+      const violation = hardModeViolation(scoredHistory, current);
+      if (violation) {
+        setShake(true);
+        window.setTimeout(() => setShake(false), 300);
+        push({
+          title: "Hard mode",
+          description: violation,
+          variant: "warning",
+          duration: 2500,
+        });
+        return;
+      }
+    }
     const nextGuesses = [...guesses, current];
     setGuesses(nextGuesses);
     setCurrent("");
@@ -182,7 +206,7 @@ export function WordleGame({
         return next;
       });
     }
-  }, [done, current, guesses, answer, date, push]);
+  }, [done, current, guesses, answer, date, push, hardMode, scoredHistory]);
 
   // Physical keyboard input handler.
   useEffect(() => {
@@ -248,6 +272,27 @@ export function WordleGame({
     }
   }
 
+  const hardModeLocked = guesses.length > 0;
+
+  function toggleHardMode() {
+    if (hardModeLocked) {
+      push({
+        title: "Lock in early",
+        description: "Hard mode can only be turned on before your first guess.",
+        variant: "warning",
+        duration: 2500,
+      });
+      return;
+    }
+    const next = !hardMode;
+    setHardMode(next);
+    try {
+      window.localStorage.setItem(HARD_MODE_KEY, next ? "1" : "0");
+    } catch {
+      // ignore
+    }
+  }
+
   return (
     <div className="flex flex-col gap-5">
       {/* Stats strip */}
@@ -261,6 +306,49 @@ export function WordleGame({
         />
         <Stat label="Streak" value={stats.currentStreak} />
         <Stat label="Best" value={stats.bestStreak} />
+      </div>
+
+      {/* Hard mode toggle */}
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <div className="text-ink-faint">
+          {hardMode ? (
+            <span className="text-warning font-medium">Hard mode on</span>
+          ) : (
+            "Standard mode"
+          )}
+          {hardMode && (
+            <span className="text-ink-faint">
+              {" "}· every clue must be used
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={toggleHardMode}
+          aria-pressed={hardMode}
+          className={
+            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
+            (hardMode
+              ? "border-warning bg-warning-soft text-warning"
+              : "border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised") +
+            (hardModeLocked ? " opacity-60 cursor-not-allowed" : "")
+          }
+        >
+          <span
+            className={
+              "w-7 h-3.5 rounded-full relative transition-colors duration-150 " +
+              (hardMode ? "bg-warning" : "bg-edge-strong")
+            }
+          >
+            <span
+              className={
+                "absolute top-0.5 w-2.5 h-2.5 rounded-full bg-paper transition-transform duration-150 " +
+                (hardMode ? "left-3.5" : "left-0.5")
+              }
+            />
+          </span>
+          Hard
+        </button>
       </div>
 
       {/* Grid */}
