@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BoardThemeProvider } from "@/components/BoardThemeProvider";
+import { ToastProvider } from "@/components/toast/ToastProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -107,7 +108,9 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-canvas text-ink">
         <ThemeProvider>
-          <BoardThemeProvider>{children}</BoardThemeProvider>
+          <BoardThemeProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </BoardThemeProvider>
         </ThemeProvider>
         <SpeedInsights />
         <Analytics />
