@@ -67,21 +67,44 @@ export default async function MeliosGamesHub() {
             <SudokuFeatureCard />
           </section>
 
+          {/* Wordle — now live */}
+          <section className="flex flex-col gap-4">
+            <h2 className="font-display text-xs uppercase tracking-[0.18em] text-ink-faint">
+              Also playing
+            </h2>
+            <Link
+              href="/wordle"
+              className="group flex items-center gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] hover:-translate-y-px transition-all duration-150"
+            >
+              <div className="flex items-center justify-center bg-paper-raised border border-edge rounded-xl py-3 px-3 sm:py-4 sm:px-4 shrink-0">
+                <WordlePreview />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="font-display text-2xl sm:text-3xl text-ink group-hover:text-brand transition-colors duration-75">
+                    Wordle
+                  </h3>
+                  <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full bg-success-soft text-success font-medium">
+                    Daily
+                  </span>
+                </div>
+                <p className="text-sm text-ink-soft mt-1">
+                  Five letters. Six guesses. A new word every day.
+                </p>
+              </div>
+              <ArrowIcon className="hidden sm:block text-ink-faint group-hover:text-brand group-hover:translate-x-0.5 transition-all duration-100" />
+            </Link>
+          </section>
+
           {/* Coming soon */}
           <section className="flex flex-col gap-4">
             <div className="flex items-baseline justify-between">
               <h2 className="font-display text-xs uppercase tracking-[0.18em] text-ink-faint">
                 Coming soon
               </h2>
-              <span className="text-xs text-ink-faint">4 in the works</span>
+              <span className="text-xs text-ink-faint">3 in the works</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <ComingSoonCard
-                name="Wordle"
-                blurb="Five letters. Six guesses."
-                tags={["Word", "Solo"]}
-                preview={<WordlePreview />}
-              />
               <ComingSoonCard
                 name="Crossword"
                 blurb="Daily crosswords with friends."
@@ -450,6 +473,24 @@ function ConnectionsPreview() {
 }
 
 /** Minesweeper preview — small grid with numbers and a flag. */
+function ArrowIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M5 12h14M12 5l7 7-7 7" />
+    </svg>
+  );
+}
+
 function MinesweeperPreview() {
   // 4x4 — string per cell:
   //   "" = revealed empty, "1"/"2"/"3" = number, "?" = unrevealed, "F" = flag
