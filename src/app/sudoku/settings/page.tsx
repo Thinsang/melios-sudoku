@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { SettingsForms } from "./SettingsForms";
 import { AppearanceSection } from "./AppearanceSection";
 import { BoardThemeSection } from "./BoardThemeSection";
+import { SettingsBackLink } from "./SettingsBackLink";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -19,12 +20,7 @@ export default async function SettingsPage() {
     <main className="flex flex-1 justify-center px-5 sm:px-6 py-10">
       <div className="w-full max-w-md flex flex-col gap-10">
         <div>
-          <Link
-            href="/sudoku"
-            className="text-sm text-ink-soft hover:text-ink transition-colors duration-75"
-          >
-            ← Sudoku
-          </Link>
+          <SettingsBackLink />
           <h1 className="font-display text-4xl text-ink mt-3">Settings</h1>
         </div>
 
