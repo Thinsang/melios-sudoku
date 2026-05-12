@@ -22,6 +22,12 @@ export function BoardDecoration({ theme }: { theme: BoardThemeId }) {
       return <ForestDecoration />;
     case "coral":
       return <CoralDecoration />;
+    case "ocean":
+      return <OceanDecoration />;
+    case "parchment":
+      return <ParchmentDecoration />;
+    case "lavender":
+      return <LavenderDecoration />;
     default:
       return null;
   }
@@ -340,6 +346,259 @@ function Leaf({
       />
       <line x1={0} y1={-6} x2={0} y2={6} stroke="#5e8a4f" strokeWidth={0.5} />
     </g>
+  );
+}
+
+/* =========================================================================
+ * Ocean — kelp at bottom-left, bubbles rising along the right.
+ * =======================================================================*/
+
+function OceanDecoration() {
+  return (
+    <div className={FRAME_CLS} aria-hidden>
+      {/* Kelp stalks at bottom-left */}
+      <svg
+        viewBox="0 0 120 200"
+        className="absolute -bottom-2 left-0 h-32 sm:h-40 lg:h-48 w-12 sm:w-16"
+        preserveAspectRatio="xMinYMax meet"
+      >
+        <Kelp d="M30,200 Q20,160 28,120 Q36,80 26,40 Q20,15 30,0" />
+        <Kelp d="M55,200 Q48,170 58,140 Q70,105 60,70 Q52,45 60,20" opacity={0.55} />
+        <Kelp d="M85,200 Q92,170 84,140 Q72,110 84,80 Q92,55 86,30" opacity={0.7} />
+      </svg>
+      {/* Rising bubbles on the right */}
+      <svg
+        viewBox="0 0 40 200"
+        className="absolute right-0 bottom-0 h-full w-6 sm:w-8"
+        preserveAspectRatio="xMaxYMid meet"
+      >
+        {[
+          { cx: 20, cy: 170, r: 3, o: 0.7 },
+          { cx: 14, cy: 150, r: 2, o: 0.55 },
+          { cx: 26, cy: 120, r: 4, o: 0.65 },
+          { cx: 16, cy: 95, r: 2.5, o: 0.5 },
+          { cx: 24, cy: 60, r: 3, o: 0.55 },
+          { cx: 14, cy: 35, r: 2, o: 0.45 },
+          { cx: 22, cy: 12, r: 3.5, o: 0.4 },
+        ].map((b, i) => (
+          <circle
+            key={i}
+            cx={b.cx}
+            cy={b.cy}
+            r={b.r}
+            fill="none"
+            stroke="#5dd6c4"
+            strokeWidth={1}
+            opacity={b.o}
+          />
+        ))}
+      </svg>
+      {/* Top wave-line */}
+      <svg
+        viewBox="0 0 200 20"
+        className="absolute -top-1 left-2 right-2 h-4 w-[calc(100%-1rem)]"
+        preserveAspectRatio="none"
+      >
+        <path
+          d="M0,10 Q25,2 50,10 T100,10 T150,10 T200,10"
+          fill="none"
+          stroke="#5dd6c4"
+          strokeWidth={1.5}
+          opacity={0.55}
+        />
+      </svg>
+    </div>
+  );
+}
+
+function Kelp({ d, opacity = 0.8 }: { d: string; opacity?: number }) {
+  return (
+    <path
+      d={d}
+      stroke="#3a8e75"
+      strokeWidth={3.5}
+      strokeLinecap="round"
+      fill="none"
+      opacity={opacity}
+    />
+  );
+}
+
+/* =========================================================================
+ * Parchment — quill feather, ink splotches, and decorative scroll corners.
+ * =======================================================================*/
+
+function ParchmentDecoration() {
+  return (
+    <div className={FRAME_CLS} aria-hidden>
+      {/* Quill at top-right */}
+      <svg
+        viewBox="0 0 100 100"
+        className="absolute -top-1 -right-1 w-20 sm:w-28 lg:w-36"
+        preserveAspectRatio="xMaxYMin meet"
+      >
+        {/* Shaft */}
+        <path
+          d="M88,2 L40,70"
+          stroke="#8b6230"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          opacity={0.85}
+        />
+        {/* Feather barbs (short lines along the shaft) */}
+        {Array.from({ length: 9 }).map((_, i) => {
+          const t = 0.15 + i * 0.085;
+          const x = 88 + (40 - 88) * t;
+          const y = 2 + (70 - 2) * t;
+          // Perpendicular offset to the right of the shaft
+          const dx = 10 - i * 0.6;
+          const dy = 8 - i * 0.4;
+          return (
+            <line
+              key={i}
+              x1={x}
+              y1={y}
+              x2={x + dx}
+              y2={y - dy}
+              stroke="#a4541a"
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              opacity={0.75}
+            />
+          );
+        })}
+        {/* Nib */}
+        <path
+          d="M40,70 L35,76 L46,72 Z"
+          fill="#3b2410"
+          opacity={0.85}
+        />
+      </svg>
+      {/* Ink splotch at bottom-left */}
+      <svg
+        viewBox="0 0 60 60"
+        className="absolute -bottom-1 -left-1 w-10 sm:w-14 lg:w-16"
+      >
+        <path
+          d="M30,8 Q42,16 44,28 Q48,42 36,48 Q22,54 14,42 Q6,30 14,18 Q22,8 30,8 Z"
+          fill="#3b2410"
+          opacity={0.65}
+        />
+        <circle cx={48} cy={20} r={2} fill="#3b2410" opacity={0.55} />
+        <circle cx={10} cy={50} r={1.5} fill="#3b2410" opacity={0.45} />
+        <circle cx={50} cy={50} r={2.5} fill="#3b2410" opacity={0.6} />
+      </svg>
+      {/* Decorative corner flourishes */}
+      <svg
+        viewBox="0 0 40 40"
+        className="absolute -top-1 -left-1 w-8 sm:w-10"
+      >
+        <path
+          d="M2,38 Q2,12 14,8 Q24,4 30,2"
+          stroke="#8b6230"
+          strokeWidth={1.5}
+          fill="none"
+          opacity={0.6}
+        />
+        <circle cx={30} cy={2} r={2} fill="#a4541a" opacity={0.7} />
+      </svg>
+      <svg
+        viewBox="0 0 40 40"
+        className="absolute -bottom-1 -right-1 w-8 sm:w-10"
+      >
+        <path
+          d="M38,2 Q38,28 26,32 Q16,36 10,38"
+          stroke="#8b6230"
+          strokeWidth={1.5}
+          fill="none"
+          opacity={0.6}
+        />
+        <circle cx={10} cy={38} r={2} fill="#a4541a" opacity={0.7} />
+      </svg>
+    </div>
+  );
+}
+
+/* =========================================================================
+ * Lavender — soft sparkles + curling vine.
+ * =======================================================================*/
+
+function LavenderDecoration() {
+  const sparkles: Array<{ x: number; y: number; s: number; o: number }> = [
+    { x: 6, y: 14, s: 3, o: 0.75 },
+    { x: 22, y: 4, s: 2, o: 0.55 },
+    { x: 92, y: 8, s: 3.5, o: 0.8 },
+    { x: 78, y: 22, s: 2, o: 0.55 },
+    { x: 4, y: 60, s: 2.5, o: 0.6 },
+    { x: 96, y: 50, s: 3, o: 0.7 },
+    { x: 8, y: 92, s: 2, o: 0.5 },
+    { x: 90, y: 94, s: 3, o: 0.7 },
+    { x: 50, y: 3, s: 2, o: 0.55 },
+  ];
+
+  return (
+    <div className={FRAME_CLS} aria-hidden>
+      <svg
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+        className="absolute inset-0 w-full h-full"
+      >
+        {sparkles.map((p, i) => (
+          <g key={i} transform={`translate(${p.x},${p.y})`} opacity={p.o}>
+            <path
+              d={`M0,-${p.s} L${p.s * 0.3},0 L0,${p.s} L-${p.s * 0.3},0 Z`}
+              fill="#b89cea"
+            />
+            <path
+              d={`M-${p.s},0 L0,-${p.s * 0.3} L${p.s},0 L0,${p.s * 0.3} Z`}
+              fill="#b89cea"
+            />
+          </g>
+        ))}
+      </svg>
+      {/* Curling vine bottom-left → middle */}
+      <svg
+        viewBox="0 0 120 100"
+        className="absolute -bottom-1 -left-1 w-24 sm:w-32 lg:w-40"
+        preserveAspectRatio="xMinYMax meet"
+      >
+        <path
+          d="M0,100 Q20,85 30,70 Q40,50 60,55 Q80,60 90,40 Q100,20 120,15"
+          stroke="#9b78d8"
+          strokeWidth={1.6}
+          fill="none"
+          opacity={0.7}
+        />
+        {[
+          { cx: 30, cy: 70 },
+          { cx: 60, cy: 55 },
+          { cx: 90, cy: 40 },
+          { cx: 118, cy: 16 },
+        ].map((p, i) => (
+          <g key={i} transform={`translate(${p.cx},${p.cy})`}>
+            <ellipse cx={0} cy={0} rx={4} ry={2.5} fill="#c5a8ee" opacity={0.85} />
+            <ellipse
+              cx={0}
+              cy={0}
+              rx={4}
+              ry={2.5}
+              fill="#c5a8ee"
+              opacity={0.7}
+              transform="rotate(60)"
+            />
+            <ellipse
+              cx={0}
+              cy={0}
+              rx={4}
+              ry={2.5}
+              fill="#c5a8ee"
+              opacity={0.7}
+              transform="rotate(-60)"
+            />
+          </g>
+        ))}
+      </svg>
+    </div>
   );
 }
 

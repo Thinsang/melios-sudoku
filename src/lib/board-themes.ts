@@ -17,7 +17,10 @@ export type BoardThemeId =
   | "forest"
   | "slate"
   | "coral"
-  | "mono";
+  | "mono"
+  | "ocean"
+  | "parchment"
+  | "lavender";
 
 export interface BoardTheme {
   id: BoardThemeId;
@@ -111,6 +114,39 @@ export const BOARD_THEMES: BoardTheme[] = [
       given: "#000000",
       user: "#525252",
       selected: "#e5e5e5",
+    },
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    description: "Deep teal water, sandy ink.",
+    swatches: {
+      paper: "#0c2a3a",
+      given: "#f0e2c4",
+      user: "#5dd6c4",
+      selected: "#143c52",
+    },
+  },
+  {
+    id: "parchment",
+    name: "Parchment",
+    description: "Aged vellum, brown ink.",
+    swatches: {
+      paper: "#f3e6c4",
+      given: "#3b2410",
+      user: "#a4541a",
+      selected: "#e5d09a",
+    },
+  },
+  {
+    id: "lavender",
+    name: "Lavender",
+    description: "Soft pastel violet, dreamy.",
+    swatches: {
+      paper: "#f6f1ff",
+      given: "#3a2570",
+      user: "#7c4ddc",
+      selected: "#e2d5fa",
     },
   },
 ];

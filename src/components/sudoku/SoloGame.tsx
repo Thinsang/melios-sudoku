@@ -255,18 +255,38 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
           </button>
         )}
         {game.state.paused && !notStarted && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
-            <div className="text-center">
-              <div className="font-display text-2xl text-ink mb-3">Paused</div>
-              <button
-                type="button"
-                onClick={game.togglePause}
-                className="px-5 py-2 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
-              >
-                Resume
-              </button>
+          <button
+            type="button"
+            onClick={game.togglePause}
+            aria-label="Resume game"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/90 backdrop-blur-md rounded-xl group focus:outline-none"
+          >
+            <div className="text-center px-6 max-w-xs">
+              <div className="mx-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-brand-soft text-brand flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-150">
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                  <rect x="14" y="4" width="4" height="16" rx="1" />
+                </svg>
+              </div>
+              <div className="font-display text-3xl sm:text-4xl text-ink mb-1">
+                Paused
+              </div>
+              <div className="font-mono tabular-nums text-sm text-ink-soft mb-5">
+                {fmtTime(game.state.elapsedMs)}
+              </div>
+              <span className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-brand text-brand-ink font-medium shadow-[var(--shadow-soft)] group-hover:bg-brand-hover group-active:scale-[0.98] transition-all duration-75">
+                Tap to resume
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
             </div>
-          </div>
+          </button>
         )}
       </div>
 

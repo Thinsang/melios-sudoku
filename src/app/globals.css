@@ -289,6 +289,48 @@ h1, h2, h3 {
   --cell-conflict-ink: #b91c1c;
 }
 
+[data-board-theme="ocean"] {
+  --paper: #0c2a3a;
+  --ink: #f0e2c4;
+  --edge: #1d4255;
+  --cell-given: #f0e2c4;
+  --cell-user: #5dd6c4;
+  --cell-selected: #143c52;
+  --cell-related: #112f42;
+  --cell-match: #2a7a89;
+  --cell-wrong-bg: #2a1a1a;
+  --cell-conflict: #4a2a2a;
+  --cell-conflict-ink: #ff9b8a;
+}
+
+[data-board-theme="parchment"] {
+  --paper: #f3e6c4;
+  --ink: #3b2410;
+  --edge: #d4c094;
+  --cell-given: #3b2410;
+  --cell-user: #a4541a;
+  --cell-selected: #e5d09a;
+  --cell-related: #ecdcb0;
+  --cell-match: #c89760;
+  --cell-wrong-bg: #f0d4c8;
+  --cell-conflict: #e8bca8;
+  --cell-conflict-ink: #8a2a14;
+}
+
+[data-board-theme="lavender"] {
+  --paper: #f6f1ff;
+  --ink: #3a2570;
+  --edge: #d8c8f5;
+  --cell-given: #3a2570;
+  --cell-user: #7c4ddc;
+  --cell-selected: #e2d5fa;
+  --cell-related: #ece2fc;
+  --cell-match: #b89cea;
+  --cell-wrong-bg: #fce0e8;
+  --cell-conflict: #f6c8d4;
+  --cell-conflict-ink: #b13057;
+}
+
 /* Custom focus ring — uses brand, not the browser default. */
 :focus-visible {
   outline: 2px solid var(--brand);
