@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { getCurrentProfile, getUser } from "@/lib/auth/server";
+import { createClient } from "@/lib/supabase/server";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getUserDailyScore, getUserStreak, todayKey } from "@/lib/daily";
@@ -8,6 +9,7 @@ import {
   getMyWordleResult,
   getUserWordleStreak,
 } from "@/lib/wordle/actions";
+import { DIFFICULTY_LABEL, type Difficulty } from "@/lib/sudoku";
 
 // Schema.org Organization + WebSite structured data. Helps Google understand
 // what the site is and surface sitelinks under search results.
@@ -56,6 +58,30 @@ export default async function MeliosGamesHub() {
       ])
     : [null, null, null, null];
 
+  // Most-recently touched in-progress game so we can offer Resume up
+  // top instead of forcing them to navigate into /sudoku.
+  interface ActiveGame {
+    id: string;
+    mode: string;
+    difficulty: string;
+  }
+  let activeGame: ActiveGame | null = null;
+  if (user) {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("games")
+      .select(
+        "id, mode, difficulty, started_at, status, game_players!inner(user_id)"
+      )
+      .eq("status", "active")
+      .eq("game_players.user_id", user.id)
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const row = data as unknown as ActiveGame | null;
+    if (row) activeGame = row;
+  }
+
   return (
     <>
       <script
@@ -75,6 +101,45 @@ export default async function MeliosGamesHub() {
               </em>
             </h1>
           </section>
+
+          {/* Resume in-progress game */}
+          {activeGame && (
+            <Link
+              href={`/sudoku/play/${activeGame.id}`}
+              className="group flex items-center gap-4 p-4 sm:p-5 rounded-2xl border border-brand/30 bg-brand-soft hover:border-brand/60 hover:shadow-[var(--shadow-soft)] hover:-translate-y-px transition-all duration-150"
+            >
+              <div className="shrink-0 w-11 h-11 rounded-full bg-paper text-brand flex items-center justify-center">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-brand font-semibold">
+                  Resume
+                </div>
+                <div className="font-display text-lg text-ink leading-tight mt-0.5">
+                  {(activeGame.mode === "race"
+                    ? "Race"
+                    : activeGame.mode === "coop"
+                      ? "Co-op"
+                      : "Solo")}{" "}
+                  ·{" "}
+                  {DIFFICULTY_LABEL[
+                    activeGame.difficulty as Difficulty
+                  ] ?? activeGame.difficulty}
+                </div>
+                <div className="text-xs text-ink-soft mt-0.5">
+                  You left a puzzle in progress.
+                </div>
+              </div>
+              <ArrowIcon className="hidden sm:block text-ink-faint group-hover:text-brand group-hover:translate-x-0.5 transition-all duration-100" />
+            </Link>
+          )}
 
           {/* Today snapshot — signed-in users only */}
           {user && (
