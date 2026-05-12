@@ -194,6 +194,101 @@ h1, h2, h3 {
   font-variation-settings: "opsz" 144, "SOFT" 50, "WONK" 0;
 }
 
+/* =========================================================================
+ * Board themes
+ *
+ * Each `[data-board-theme="…"]` block scopes its variable overrides to the
+ * element it's applied to (and its descendants). The board sets the attribute
+ * on its wrapper, so the surrounding chrome (header, page background) keeps
+ * its light/dark colors while only the board picks up the theme.
+ *
+ * "Paper" is the default — no override block, so it inherits the page theme.
+ * =======================================================================*/
+
+[data-board-theme="sakura"] {
+  --paper: #fff4f7;
+  --ink: #4a1230;
+  --edge: #f4cad8;
+  --cell-given: #4a1230;
+  --cell-user: #c01a4f;
+  --cell-selected: #fbcad6;
+  --cell-related: #fde7ed;
+  --cell-match: #f7a3bd;
+  --cell-wrong-bg: #ffeaea;
+  --cell-conflict: #fcd3d3;
+  --cell-conflict-ink: #a40e3c;
+}
+
+[data-board-theme="midnight"] {
+  --paper: #0c1325;
+  --ink: #e0e6ff;
+  --edge: #1c2742;
+  --cell-given: #e0e6ff;
+  --cell-user: #7aa2ff;
+  --cell-selected: #1f3a8a;
+  --cell-related: #182143;
+  --cell-match: #2d4ab8;
+  --cell-wrong-bg: #2a1217;
+  --cell-conflict: #4a1f25;
+  --cell-conflict-ink: #ff8a9e;
+}
+
+[data-board-theme="forest"] {
+  --paper: #1a2820;
+  --ink: #e8e6d4;
+  --edge: #2a3d31;
+  --cell-given: #e8e6d4;
+  --cell-user: #d4a73a;
+  --cell-selected: #3a5a40;
+  --cell-related: #243426;
+  --cell-match: #527d58;
+  --cell-wrong-bg: #2b1a18;
+  --cell-conflict: #4a2520;
+  --cell-conflict-ink: #ffb39a;
+}
+
+[data-board-theme="slate"] {
+  --paper: #f5f5f5;
+  --ink: #0a0a0a;
+  --edge: #d4d4d4;
+  --cell-given: #0a0a0a;
+  --cell-user: #525252;
+  --cell-selected: #d4d4d4;
+  --cell-related: #e5e5e5;
+  --cell-match: #a3a3a3;
+  --cell-wrong-bg: #fee2e2;
+  --cell-conflict: #fecaca;
+  --cell-conflict-ink: #b91c1c;
+}
+
+[data-board-theme="coral"] {
+  --paper: #fff4ee;
+  --ink: #7a2a14;
+  --edge: #f4ccba;
+  --cell-given: #7a2a14;
+  --cell-user: #e85a2e;
+  --cell-selected: #fdd4b8;
+  --cell-related: #ffe9d8;
+  --cell-match: #f7b08a;
+  --cell-wrong-bg: #fff1f1;
+  --cell-conflict: #fcd3d3;
+  --cell-conflict-ink: #a4282a;
+}
+
+[data-board-theme="mono"] {
+  --paper: #ffffff;
+  --ink: #000000;
+  --edge: #d4d4d4;
+  --cell-given: #000000;
+  --cell-user: #525252;
+  --cell-selected: #e5e5e5;
+  --cell-related: #f5f5f5;
+  --cell-match: #a3a3a3;
+  --cell-wrong-bg: #fee2e2;
+  --cell-conflict: #fecaca;
+  --cell-conflict-ink: #b91c1c;
+}
+
 /* Custom focus ring — uses brand, not the browser default. */
 :focus-visible {
   outline: 2px solid var(--brand);

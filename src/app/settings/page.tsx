@@ -4,6 +4,7 @@ import { getCurrentProfile } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { SettingsForms } from "./SettingsForms";
 import { AppearanceSection } from "./AppearanceSection";
+import { BoardThemeSection } from "./BoardThemeSection";
 
 export default async function SettingsPage() {
   const profile = await getCurrentProfile();
@@ -43,6 +44,8 @@ export default async function SettingsPage() {
         </section>
 
         <AppearanceSection />
+
+        <BoardThemeSection />
 
         <SettingsForms
           email={user?.email ?? ""}

@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { Board, CellValue } from "@/lib/sudoku";
+import { useBoardTheme } from "@/components/BoardThemeProvider";
 
 interface Props {
   given: Board;
@@ -26,6 +27,7 @@ export function SudokuBoard({
   onSelect,
   hideMistakes,
 }: Props) {
+  const { theme } = useBoardTheme();
   const selRow = selected !== null ? Math.floor(selected / 9) : -1;
   const selCol = selected !== null ? selected % 9 : -1;
   const selBox =
@@ -36,6 +38,7 @@ export function SudokuBoard({
 
   return (
     <div
+      data-board-theme={theme}
       className="grid grid-cols-9 grid-rows-9 aspect-square w-full select-none touch-manipulation rounded-xl overflow-hidden border-2 border-ink bg-paper shadow-[var(--shadow-soft)]"
       role="grid"
       aria-label="Sudoku board"
