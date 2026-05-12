@@ -39,7 +39,7 @@ export function SignUpForm({ next }: { next: string }) {
           </div>
         </div>
         <Link
-          href="/auth/sign-in"
+          href="/sudoku/auth/sign-in"
           className="self-start text-sm text-brand hover:underline"
         >
           → Already confirmed? Sign in

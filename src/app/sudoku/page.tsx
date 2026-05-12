@@ -127,18 +127,83 @@ export default async function Home({
       <FirstTimeTutorial />
       <div className="w-full max-w-3xl flex flex-col gap-12">
         {showWelcome && (
-          <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 flex items-center gap-3 -mb-4">
-            <div className="shrink-0 w-7 h-7 rounded-full bg-success/20 text-success flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
+          <section className="rounded-2xl border border-success/30 bg-success-soft p-5 sm:p-6 flex flex-col gap-4 -mb-4">
+            <div className="flex items-start gap-4">
+              <div className="shrink-0 w-10 h-10 rounded-full bg-success/15 text-success flex items-center justify-center">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[10px] uppercase tracking-[0.18em] text-success font-medium">
+                  Account ready
+                </div>
+                <h2 className="font-display text-xl text-ink leading-tight mt-0.5">
+                  {profileGreeting
+                    ? `Welcome, ${profileGreeting}.`
+                    : "Welcome."}
+                </h2>
+                <p className="text-sm text-ink-soft mt-1.5">
+                  Three good places to start —
+                </p>
+                <ul className="text-sm text-ink-soft mt-1.5 flex flex-col gap-1">
+                  <li className="flex items-baseline gap-2">
+                    <span className="text-success">✓</span>
+                    <span>
+                      <Link
+                        href="/sudoku/daily"
+                        className="text-brand font-medium hover:underline"
+                      >
+                        Daily Sudoku
+                      </Link>{" "}
+                      — one puzzle a day, build a streak
+                    </span>
+                  </li>
+                  <li className="flex items-baseline gap-2">
+                    <span className="text-success">✓</span>
+                    <span>
+                      <Link
+                        href="/wordle"
+                        className="text-brand font-medium hover:underline"
+                      >
+                        Daily Wordle
+                      </Link>{" "}
+                      — six guesses, new word every day
+                    </span>
+                  </li>
+                  <li className="flex items-baseline gap-2">
+                    <span className="text-success">✓</span>
+                    <span>
+                      <Link
+                        href="/sudoku/friends"
+                        className="text-brand font-medium hover:underline"
+                      >
+                        Add a friend
+                      </Link>{" "}
+                      to race or solve together
+                    </span>
+                  </li>
+                </ul>
+                <div className="mt-3 text-xs text-ink-faint">
+                  Drop by{" "}
+                  <Link
+                    href="/sudoku/settings"
+                    className="hover:text-ink hover:underline"
+                  >
+                    settings
+                  </Link>{" "}
+                  to upload an avatar and pick a board theme.
+                </div>
+              </div>
+              <Link
+                href="/sudoku"
+                aria-label="Dismiss welcome"
+                className="shrink-0 text-ink-faint hover:text-ink text-lg leading-none -mt-1 -mr-1 transition-colors duration-75"
+              >
+                ×
+              </Link>
             </div>
-            <div className="text-sm text-ink">
-              {profileGreeting
-                ? `Welcome, ${profileGreeting}. Your account is ready.`
-                : "Welcome. Your account is ready."}
-            </div>
-          </div>
+          </section>
         )}
 
         {/* Hero */}
