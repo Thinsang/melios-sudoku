@@ -49,7 +49,13 @@ interface ScoreRow {
   } | null;
 }
 
-export default async function DailyPage() {
+export default async function DailyPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ f?: string }>;
+}) {
+  const { f } = await searchParams;
+  const friendsOnly = f === "friends";
   const date = await todayKey();
   const dailyPuzzle = await getOrCreateDailyPuzzle(date);
   const me = await getUser();
@@ -60,7 +66,17 @@ export default async function DailyPage() {
   // Top-10 daily leaderboard, dedupe to best per user (in case the unique
   // index isn't in place yet on older installs).
   const supabase = await createClient();
-  const { data: leaderboardRaw } = await supabase
+
+  let friendsScope: string[] | null = null;
+  if (friendsOnly && me) {
+    const { data: fr } = await supabase
+      .from("friendships")
+      .select("friend_id")
+      .eq("user_id", me.id);
+    friendsScope = [me.id, ...(fr ?? []).map((r) => r.friend_id as string)];
+  }
+
+  let lbQuery = supabase
     .from("scores")
     .select(
       "score, elapsed_ms, mistakes, hints_used, profiles:user_id (id, username, display_name)"
@@ -68,6 +84,10 @@ export default async function DailyPage() {
     .eq("daily_date", date)
     .order("score", { ascending: false })
     .limit(50);
+  if (friendsScope) {
+    lbQuery = lbQuery.in("user_id", friendsScope);
+  }
+  const { data: leaderboardRaw } = await lbQuery;
 
   const seen = new Set<string>();
   const leaderboard: ScoreRow[] = [];
@@ -161,23 +181,70 @@ export default async function DailyPage() {
 
         {/* Daily leaderboard */}
         <section className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between gap-3 flex-wrap">
             <h2 className="font-display text-lg text-ink">
               Today&rsquo;s leaderboard
             </h2>
-            <Link
-              href="/sudoku/leaderboard"
-              className="text-xs text-ink-faint hover:text-ink"
-            >
-              All-time →
-            </Link>
+            <div className="flex items-center gap-2">
+              {me && (
+                <Link
+                  href={
+                    friendsOnly
+                      ? "/sudoku/daily"
+                      : "/sudoku/daily?f=friends"
+                  }
+                  aria-pressed={friendsOnly}
+                  className={
+                    "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[11px] font-medium transition-colors duration-75 " +
+                    (friendsOnly
+                      ? "border-brand bg-brand text-brand-ink"
+                      : "border-edge bg-paper text-ink-soft hover:text-ink hover:border-edge-strong")
+                  }
+                >
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M17 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
+                  Friends
+                </Link>
+              )}
+              <Link
+                href="/sudoku/leaderboard"
+                className="text-xs text-ink-faint hover:text-ink"
+              >
+                All-time →
+              </Link>
+            </div>
           </div>
           {leaderboard.length === 0 ? (
             <p className="text-sm text-ink-soft border border-edge bg-paper rounded-xl p-6 text-center">
-              No one has finished today yet.{" "}
-              {me
-                ? "Be the first."
-                : "Sign in and start the day's puzzle to claim the top spot."}
+              {friendsOnly
+                ? "None of your friends have finished today yet. Encourage them, or "
+                : "No one has finished today yet. "}
+              {friendsOnly ? (
+                <Link
+                  href="/sudoku/daily"
+                  className="text-brand hover:underline"
+                >
+                  see everyone
+                </Link>
+              ) : me ? (
+                "Be the first."
+              ) : (
+                "Sign in and start the day's puzzle to claim the top spot."
+              )}
+              {friendsOnly ? "." : ""}
             </p>
           ) : (
             <ol className="flex flex-col gap-1.5">

@@ -59,20 +59,33 @@ interface ScoreRow {
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ d?: string }>;
+  searchParams: Promise<{ d?: string; f?: string }>;
 }) {
-  const { d } = await searchParams;
+  const { d, f } = await searchParams;
   const difficulty: Difficulty = (DIFFICULTIES as readonly string[]).includes(
     d ?? ""
   )
     ? (d as Difficulty)
     : "medium";
+  const friendsOnly = f === "friends";
 
   const supabase = await createClient();
   const me = await getUser();
 
+  // When in friends-only mode, look up the user's friend ids first. We
+  // include the user themselves so they always see their own rank in
+  // the filtered list (less confusing than an empty board).
+  let friendsScope: string[] | null = null;
+  if (friendsOnly && me) {
+    const { data: fr } = await supabase
+      .from("friendships")
+      .select("friend_id")
+      .eq("user_id", me.id);
+    friendsScope = [me.id, ...(fr ?? []).map((r) => r.friend_id as string)];
+  }
+
   // Pull more than 20 so we can dedupe to best-per-user without missing rows.
-  const { data } = await supabase
+  let query = supabase
     .from("scores")
     .select(
       "id, user_id, score, elapsed_ms, mistakes, hints_used, mode, created_at, profiles:user_id (id, username, display_name)"
@@ -80,6 +93,10 @@ export default async function LeaderboardPage({
     .eq("difficulty", difficulty)
     .order("score", { ascending: false })
     .limit(200);
+  if (friendsScope) {
+    query = query.in("user_id", friendsScope);
+  }
+  const { data } = await query;
 
   const rows = (data ?? []) as unknown as ScoreRow[];
 
@@ -146,25 +163,68 @@ export default async function LeaderboardPage({
         </div>
 
         {/* Difficulty tabs */}
-        <div className="flex flex-wrap gap-2">
-          {DIFFICULTIES.map((diff) => (
+        <div className="flex flex-wrap items-center gap-2">
+          {DIFFICULTIES.map((diff) => {
+            const params = new URLSearchParams();
+            params.set("d", diff);
+            if (friendsOnly) params.set("f", "friends");
+            return (
+              <Link
+                key={diff}
+                href={`/sudoku/leaderboard?${params.toString()}`}
+                className={clsx(
+                  "relative px-4 py-2 rounded-lg border text-sm font-medium transition-colors duration-75 overflow-hidden",
+                  diff === difficulty
+                    ? "border-brand bg-brand-soft text-ink"
+                    : "border-edge bg-paper text-ink-soft hover:text-ink hover:border-edge-strong"
+                )}
+              >
+                <span
+                  className="absolute left-0 top-0 h-full w-0.5"
+                  style={{ backgroundColor: `var(--${DIFFICULTY_TOKEN[diff]})` }}
+                />
+                <span className="pl-1.5">{DIFFICULTY_LABEL[diff]}</span>
+              </Link>
+            );
+          })}
+          {me && (
             <Link
-              key={diff}
-              href={`/sudoku/leaderboard?d=${diff}`}
+              href={
+                friendsOnly
+                  ? `/sudoku/leaderboard?d=${difficulty}`
+                  : `/sudoku/leaderboard?d=${difficulty}&f=friends`
+              }
+              aria-pressed={friendsOnly}
               className={clsx(
-                "relative px-4 py-2 rounded-lg border text-sm font-medium transition-colors duration-75 overflow-hidden",
-                diff === difficulty
-                  ? "border-brand bg-brand-soft text-ink"
+                "ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors duration-75",
+                friendsOnly
+                  ? "border-brand bg-brand text-brand-ink"
                   : "border-edge bg-paper text-ink-soft hover:text-ink hover:border-edge-strong"
               )}
+              title={
+                friendsOnly
+                  ? "Showing scores from your friends only"
+                  : "Show only your friends' scores"
+              }
             >
-              <span
-                className="absolute left-0 top-0 h-full w-0.5"
-                style={{ backgroundColor: `var(--${DIFFICULTY_TOKEN[diff]})` }}
-              />
-              <span className="pl-1.5">{DIFFICULTY_LABEL[diff]}</span>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M17 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              Friends
             </Link>
-          ))}
+          )}
         </div>
 
         {/* My best (when outside top 20) */}
@@ -187,15 +247,27 @@ export default async function LeaderboardPage({
 
         {/* Top scores */}
         {top.length === 0 ? (
-          <EmptyState
-            icon="🏆"
-            title={`No ${DIFFICULTY_LABEL[difficulty]} scores yet`}
-            description="The board is wide open at this difficulty. Solve a puzzle now and your name will sit at the top."
-            action={{
-              label: "Be the first",
-              href: `/sudoku/play?d=${difficulty}`,
-            }}
-          />
+          friendsOnly ? (
+            <EmptyState
+              icon="🤝"
+              title={`No ${DIFFICULTY_LABEL[difficulty]} scores from friends`}
+              description="None of your friends have a score at this difficulty yet. Invite one to play, or remove the filter."
+              action={{
+                label: "Find friends",
+                href: "/sudoku/friends",
+              }}
+            />
+          ) : (
+            <EmptyState
+              icon="🏆"
+              title={`No ${DIFFICULTY_LABEL[difficulty]} scores yet`}
+              description="The board is wide open at this difficulty. Solve a puzzle now and your name will sit at the top."
+              action={{
+                label: "Be the first",
+                href: `/sudoku/play?d=${difficulty}`,
+              }}
+            />
+          )
         ) : (
           <ol className="flex flex-col gap-1.5">
             {top.map((row, i) => {
