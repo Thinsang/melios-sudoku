@@ -10,7 +10,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
  */
 export default async function MeliosGamesHub() {
   const profile = await getCurrentProfile();
-  const greetingName = profile?.display_name ?? profile?.username ?? "Player 1";
+  // Signed in → username (the unique @handle). Signed out → "Player 1".
+  const greetingName = profile?.username ?? "Player 1";
 
   return (
     <>
