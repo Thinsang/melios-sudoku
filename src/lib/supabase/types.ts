@@ -155,6 +155,24 @@ export interface Database {
         Update: never;
         Relationships: [];
       };
+      wordle_results: {
+        Row: {
+          id: string;
+          user_id: string;
+          date: string;
+          guesses: number;
+          won: boolean;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          date: string;
+          guesses: number;
+          won: boolean;
+        };
+        Update: { guesses?: number; won?: boolean };
+        Relationships: [];
+      };
       game_invites: {
         Row: {
           id: string;

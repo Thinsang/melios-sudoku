@@ -231,6 +231,26 @@ exception when others then null;
 end $$;
 
 -- =========================================================================
+-- wordle_results  (daily wordle completions — one row per user per day)
+-- Tracks won/lost + number of guesses so we can rank a daily leaderboard
+-- and compute streaks. The answer is implied by the date (same for all
+-- users per day, generated client-side from the bundled word list).
+-- =========================================================================
+create table if not exists public.wordle_results (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.profiles on delete cascade,
+  date        date not null,
+  guesses     smallint not null check (guesses between 1 and 6),
+  won         boolean not null,
+  created_at  timestamptz not null default now(),
+  unique (user_id, date)
+);
+create index if not exists wordle_results_date_idx
+  on public.wordle_results (date, won desc, guesses asc);
+create index if not exists wordle_results_user_date_idx
+  on public.wordle_results (user_id, date desc);
+
+-- =========================================================================
 -- friendships  (mutual: one row per direction)
 -- =========================================================================
 create table if not exists public.friendships (
@@ -347,6 +367,7 @@ alter table public.moves             enable row level security;
 alter table public.cell_locks        enable row level security;
 alter table public.scores            enable row level security;
 alter table public.daily_puzzles     enable row level security;
+alter table public.wordle_results    enable row level security;
 alter table public.friendships       enable row level security;
 alter table public.friend_requests   enable row level security;
 alter table public.game_invites      enable row level security;
@@ -462,6 +483,29 @@ drop policy if exists "daily_puzzles insert today" on public.daily_puzzles;
 create policy "daily_puzzles insert today" on public.daily_puzzles
   for insert with check (
     date >= (current_date - integer '1')
+    and date <= (current_date + integer '1')
+  );
+
+-- wordle_results: public read (leaderboard); insert/update only for self
+-- and only for today (so the date can't be backfilled or tampered with).
+drop policy if exists "wordle_results read" on public.wordle_results;
+create policy "wordle_results read" on public.wordle_results
+  for select using (true);
+
+drop policy if exists "wordle_results insert self today" on public.wordle_results;
+create policy "wordle_results insert self today" on public.wordle_results
+  for insert with check (
+    user_id = auth.uid()
+    and date >= (current_date - integer '1')
+    and date <= (current_date + integer '1')
+  );
+
+drop policy if exists "wordle_results update self today" on public.wordle_results;
+create policy "wordle_results update self today" on public.wordle_results
+  for update using (user_id = auth.uid())
+  with check (
+    user_id = auth.uid()
+    and date >= (current_date - integer '1')
     and date <= (current_date + integer '1')
   );
 
