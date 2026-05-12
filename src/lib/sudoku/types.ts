@@ -2,15 +2,22 @@ export type CellValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
 
 export type Board = CellValue[];
 
-export type Difficulty = "easy" | "medium" | "hard" | "expert";
+export type Difficulty = "easy" | "medium" | "hard" | "expert" | "extreme";
 
-export const DIFFICULTIES: Difficulty[] = ["easy", "medium", "hard", "expert"];
+export const DIFFICULTIES: Difficulty[] = [
+  "easy",
+  "medium",
+  "hard",
+  "expert",
+  "extreme",
+];
 
 export const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   easy: "Easy",
   medium: "Medium",
   hard: "Hard",
   expert: "Expert",
+  extreme: "Extreme",
 };
 
 export interface Puzzle {

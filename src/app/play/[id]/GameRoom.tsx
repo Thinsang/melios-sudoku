@@ -627,6 +627,25 @@ export function GameRoom({
     [players, me.id]
   );
 
+  // Race-mode completion is non-blocking: we leave the board visible so the
+  // player can see their solved puzzle and watch opponents finish via the
+  // side panel. Solo and co-op still get the full-screen "Solved" modal.
+  const isRace = game.mode === "race";
+  const allFinished =
+    players.length > 0 && players.every((p) => p.finished_at != null);
+  const myFinishedAt = me.finished_at ?? (complete ? new Date().toISOString() : null);
+  const winner =
+    isRace
+      ? [...players]
+          .filter((p) => p.finished_at)
+          .sort((a, b) =>
+            Date.parse(a.finished_at!) - Date.parse(b.finished_at!)
+          )[0]
+      : null;
+  const showCompletionModal = complete && !isRace;
+  const showRaceFinishBanner = isRace && (complete || winner != null);
+  const iWon = isRace && winner?.id === me.id;
+
   function copyInvite() {
     if (typeof window === "undefined") return;
     const link = `${window.location.origin}/play/${game.id}`;
@@ -680,6 +699,17 @@ export function GameRoom({
           )}
         </div>
       </div>
+
+      {showRaceFinishBanner && (
+        <RaceFinishBanner
+          iWon={iWon}
+          myComplete={complete}
+          myTime={myFinishedAt ? elapsed : null}
+          winnerName={winner?.display_name ?? null}
+          winnerTime={winner?.finish_time_ms ?? null}
+          allFinished={allFinished}
+        />
+      )}
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start lg:items-start">
         <div className="w-full max-w-[min(94vw,560px)] mx-auto lg:mx-0 flex flex-col gap-4">
@@ -878,7 +908,7 @@ export function GameRoom({
         </div>
       )}
 
-      {complete && (
+      {showCompletionModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-ink/40 backdrop-blur-sm z-50 p-4">
           <div className="bg-paper border border-edge rounded-2xl p-7 sm:p-8 max-w-md w-full text-center shadow-[var(--shadow-lifted)]">
             <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-success-soft text-success flex items-center justify-center">
@@ -910,6 +940,94 @@ export function GameRoom({
       )}
     </div>
   );
+}
+
+/**
+ * Race finish banner — non-blocking. Sits above the board so the player can
+ * see their solved puzzle and spectate the rest of the race in the side panel.
+ */
+function RaceFinishBanner({
+  iWon,
+  myComplete,
+  myTime,
+  winnerName,
+  winnerTime,
+  allFinished,
+}: {
+  iWon: boolean;
+  myComplete: boolean;
+  myTime: number | null;
+  winnerName: string | null;
+  winnerTime: number | null;
+  allFinished: boolean;
+}) {
+  // Three states:
+  //  - I won (or am the only one done so far)
+  //  - I finished but someone else finished first
+  //  - Someone else finished and I'm still solving
+  let title: string;
+  let subtitle: string;
+  let tone: "win" | "info" | "alert";
+
+  if (iWon && myComplete) {
+    title = "You won!";
+    subtitle = myTime !== null ? `Finished in ${formatBannerTime(myTime)}` : "First across the line.";
+    tone = "win";
+  } else if (myComplete) {
+    title = "Done!";
+    const winnerLabel =
+      winnerName && winnerTime !== null
+        ? `${winnerName} won in ${formatBannerTime(winnerTime)}`
+        : winnerName
+          ? `${winnerName} won`
+          : "Race resolved";
+    subtitle = `${myTime !== null ? `You finished in ${formatBannerTime(myTime)}. ` : ""}${winnerLabel}.`;
+    tone = "info";
+  } else {
+    title = winnerName ? `${winnerName} won the race` : "Race over";
+    subtitle = winnerTime !== null
+      ? `Winner ${formatBannerTime(winnerTime)}. Keep going if you'd like to finish.`
+      : "Keep going if you'd like to finish.";
+    tone = "alert";
+  }
+
+  const palette =
+    tone === "win"
+      ? "bg-success-soft border-success/30 text-ink"
+      : tone === "info"
+        ? "bg-brand-soft border-brand/30 text-ink"
+        : "bg-warning-soft border-warning/30 text-ink";
+
+  return (
+    <div
+      className={`rounded-xl border ${palette} px-4 py-3 flex items-center gap-3`}
+    >
+      <div className="text-2xl leading-none">
+        {tone === "win" ? "🏆" : tone === "info" ? "🎯" : "🏁"}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="font-display text-base text-ink leading-tight">{title}</div>
+        <div className="text-sm text-ink-soft mt-0.5">{subtitle}</div>
+      </div>
+      {allFinished && (
+        <Link
+          href="/new-game"
+          className="shrink-0 px-3 py-1.5 rounded-md bg-brand hover:bg-brand-hover text-brand-ink text-xs font-medium transition-colors duration-75"
+        >
+          New game
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function formatBannerTime(ms: number) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
 }
 
 function RaceLobby({

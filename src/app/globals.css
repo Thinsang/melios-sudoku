@@ -45,6 +45,9 @@
   --diff-medium: #3e6098;
   --diff-hard: #d89243;
   --diff-expert: #be123c;
+  /* Extreme reads as a near-black "void" — distinct from expert's crimson
+     and unmistakably the heaviest tier */
+  --diff-extreme: #18181b;
 
   /* Sudoku cell highlights */
   --cell-given: #1c1916;
@@ -92,6 +95,7 @@
   --diff-medium: #6589c0;
   --diff-hard: #e0a95c;
   --diff-expert: #f87171;
+  --diff-extreme: #fafafa;
 
   --cell-given: #f2ede3;
   --cell-user: #a78bfa;

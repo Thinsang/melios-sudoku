@@ -8,6 +8,7 @@ const DIFFICULTY_DESC: Record<Difficulty, string> = {
   medium: "Balanced and steady.",
   hard: "Real chains and pairs.",
   expert: "For the truly fearless.",
+  extreme: "17-21 clues. The hardest sudoku math allows.",
 };
 
 const DIFFICULTY_PIPS: Record<Difficulty, number> = {
@@ -15,6 +16,7 @@ const DIFFICULTY_PIPS: Record<Difficulty, number> = {
   medium: 2,
   hard: 3,
   expert: 4,
+  extreme: 5,
 };
 
 const DIFFICULTY_TOKEN: Record<Difficulty, string> = {
@@ -22,6 +24,7 @@ const DIFFICULTY_TOKEN: Record<Difficulty, string> = {
   medium: "diff-medium",
   hard: "diff-hard",
   expert: "diff-expert",
+  extreme: "diff-extreme",
 };
 
 const MODE_LABEL: Record<string, string> = {
@@ -215,8 +218,8 @@ function Section({
 
 function Pips({ count, colorVar }: { count: number; colorVar: string }) {
   return (
-    <div className="flex items-center gap-1 pt-1" aria-label={`Difficulty ${count} of 4`}>
-      {[1, 2, 3, 4].map((i) => (
+    <div className="flex items-center gap-1 pt-1" aria-label={`Difficulty ${count} of 5`}>
+      {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
           className="w-1.5 h-1.5 rounded-full"

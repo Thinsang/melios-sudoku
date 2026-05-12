@@ -97,6 +97,9 @@ const CLUE_RANGE: Record<Difficulty, [number, number]> = {
   medium: [32, 36],
   hard: [27, 30],
   expert: [22, 26],
+  // Sudoku's mathematical floor for a unique-solution puzzle is 17 clues.
+  // Extreme rides right up against it. Generation can take a few seconds.
+  extreme: [17, 21],
 };
 
 export function generatePuzzle(

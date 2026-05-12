@@ -34,7 +34,7 @@ export interface Database {
         Row: {
           id: string;
           mode: "solo" | "coop" | "race";
-          difficulty: "easy" | "medium" | "hard" | "expert";
+          difficulty: "easy" | "medium" | "hard" | "expert" | "extreme";
           puzzle: string;
           solution: string;
           current_board: string | null;

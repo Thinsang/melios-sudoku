@@ -56,7 +56,7 @@ create trigger on_auth_user_created
 create table if not exists public.games (
   id             uuid primary key default gen_random_uuid(),
   mode           text not null check (mode in ('solo','coop','race')),
-  difficulty     text not null check (difficulty in ('easy','medium','hard','expert')),
+  difficulty     text not null check (difficulty in ('easy','medium','hard','expert','extreme')),
   puzzle         text not null check (char_length(puzzle) = 81),    -- givens, '0' for blank
   solution       text not null check (char_length(solution) = 81),
   current_board  text check (current_board is null or char_length(current_board) = 81),  -- co-op shared board; null for race
@@ -77,6 +77,15 @@ begin
   alter table public.games alter column solution type text;
   alter table public.games alter column current_board type text;
 exception when undefined_column then null;
+end $$;
+
+-- Migration: older installs only allowed 4 difficulties; add 'extreme'.
+do $$
+begin
+  alter table public.games drop constraint if exists games_difficulty_check;
+  alter table public.games add constraint games_difficulty_check
+    check (difficulty in ('easy','medium','hard','expert','extreme'));
+exception when others then null;
 end $$;
 
 create index if not exists games_invite_code_idx on public.games (invite_code);

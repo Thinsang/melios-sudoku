@@ -20,6 +20,7 @@ const DIFFICULTY_TOKEN: Record<Difficulty, string> = {
   medium: "diff-medium",
   hard: "diff-hard",
   expert: "diff-expert",
+  extreme: "diff-extreme",
 };
 
 interface Friend {
