@@ -26,6 +26,8 @@ import {
 } from "@/lib/sudoku";
 import { SudokuBoard } from "@/components/sudoku/SudokuBoard";
 import { NumberPad } from "@/components/sudoku/NumberPad";
+import { BoardDecoration } from "@/components/sudoku/BoardDecoration";
+import { useBoardTheme } from "@/components/BoardThemeProvider";
 import { finishCoop, finishRace, recordMove, startRace } from "@/lib/games/actions";
 import { EndGameButton } from "./EndGameButton";
 
@@ -70,6 +72,7 @@ export function GameRoom({
   isGuest: boolean;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const { theme: boardTheme } = useBoardTheme();
   const [game, setGame] = useState<Game>(g0);
   const [players, setPlayers] = useState<Player[]>(initialPlayers);
   const [oppProgress, setOppProgress] = useState<Record<string, OppProgress>>({});
@@ -747,6 +750,7 @@ export function GameRoom({
           </div>
 
           <div className="relative">
+            <BoardDecoration theme={boardTheme} />
             <SudokuBoard
               given={given}
               current={board}

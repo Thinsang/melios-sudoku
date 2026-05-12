@@ -11,8 +11,10 @@ import {
 } from "@/lib/sudoku";
 import { MAX_HINTS, useSudokuGame } from "@/lib/sudoku/useSudokuGame";
 import { recordSoloScore, type SoloScoreResult } from "@/lib/games/actions";
+import { useBoardTheme } from "@/components/BoardThemeProvider";
 import { SudokuBoard } from "./SudokuBoard";
 import { NumberPad } from "./NumberPad";
+import { BoardDecoration } from "./BoardDecoration";
 
 /**
  * Compact breakdown of how the score was computed. Shows the per-factor
@@ -158,6 +160,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
   const [noteMode, setNoteMode] = useState(false);
   const game = useSudokuGame(puzzle);
   const notStarted = !game.state.started;
+  const { theme: boardTheme } = useBoardTheme();
 
   const [scoreResult, setScoreResult] = useState<SoloScoreResult | null>(null);
   const scoreRecordedRef = useRef(false);
@@ -214,6 +217,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
       </div>
 
       <div className="relative">
+        <BoardDecoration theme={boardTheme} />
         <SudokuBoard
           given={game.state.given}
           current={game.state.current}
