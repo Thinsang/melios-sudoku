@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getUser } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
+import { EmptyState } from "@/components/EmptyState";
 import { AddFriendForm } from "./AddFriendForm";
 import { FriendActions } from "./FriendActions";
 
@@ -145,9 +146,28 @@ export default async function FriendsPage() {
 
         <Section title={`Your friends (${friends.length})`}>
           {friends.length === 0 ? (
-            <p className="text-sm text-ink-soft">
-              No friends yet. Add one above to start challenging.
-            </p>
+            <EmptyState
+              icon={
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 11h-6" />
+                  <path d="M19 8v6" />
+                </svg>
+              }
+              title="No friends yet"
+              description="Add a friend by username above, then challenge them to a race or play together in co-op."
+              action={{ label: "Browse leaderboard", href: "/sudoku/leaderboard" }}
+            />
           ) : (
             <ul className="flex flex-col gap-2">
               {friends.map((f) => (

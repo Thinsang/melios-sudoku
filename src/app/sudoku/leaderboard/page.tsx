@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabase/server";
+import { EmptyState } from "@/components/EmptyState";
 
 export const metadata: Metadata = {
   title: "Leaderboard",
@@ -186,17 +187,15 @@ export default async function LeaderboardPage({
 
         {/* Top scores */}
         {top.length === 0 ? (
-          <div className="rounded-xl border border-edge bg-paper p-8 text-center">
-            <p className="text-sm text-ink-soft">
-              No scores yet at {DIFFICULTY_LABEL[difficulty]}.{" "}
-              <Link
-                href={`/sudoku/play?d=${difficulty}`}
-                className="text-brand hover:underline"
-              >
-                Be the first.
-              </Link>
-            </p>
-          </div>
+          <EmptyState
+            icon="🏆"
+            title={`No ${DIFFICULTY_LABEL[difficulty]} scores yet`}
+            description="The board is wide open at this difficulty. Solve a puzzle now and your name will sit at the top."
+            action={{
+              label: "Be the first",
+              href: `/sudoku/play?d=${difficulty}`,
+            }}
+          />
         ) : (
           <ol className="flex flex-col gap-1.5">
             {top.map((row, i) => {
