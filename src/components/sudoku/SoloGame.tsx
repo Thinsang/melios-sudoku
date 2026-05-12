@@ -7,11 +7,86 @@ import {
   Difficulty,
   Puzzle,
   generatePuzzle,
+  scoreBreakdown,
 } from "@/lib/sudoku";
 import { MAX_HINTS, useSudokuGame } from "@/lib/sudoku/useSudokuGame";
 import { recordSoloScore, type SoloScoreResult } from "@/lib/games/actions";
 import { SudokuBoard } from "./SudokuBoard";
 import { NumberPad } from "./NumberPad";
+
+/**
+ * Compact breakdown of how the score was computed. Shows the per-factor
+ * multipliers so it's obvious that time, mistakes, AND hints each move the
+ * number.
+ */
+function ScoreBreakdownStrip({
+  difficulty,
+  elapsedMs,
+  mistakes,
+  hintsUsed,
+}: {
+  difficulty: Difficulty;
+  elapsedMs: number;
+  mistakes: number;
+  hintsUsed: number;
+}) {
+  const bd = scoreBreakdown(difficulty, elapsedMs, mistakes, hintsUsed);
+  const fmt = (n: number) => n.toFixed(2);
+  return (
+    <div className="grid grid-cols-4 gap-2 text-xs">
+      <Factor label="Base" value={bd.base.toString()} dim />
+      <Factor
+        label="Time"
+        value={`×${fmt(bd.timeFactor)}`}
+        good={bd.timeFactor >= 1}
+      />
+      <Factor
+        label="Mistakes"
+        value={`×${fmt(bd.mistakeFactor)}`}
+        good={bd.mistakeFactor === 1}
+        warn={bd.mistakeFactor < 1}
+      />
+      <Factor
+        label="Hints"
+        value={`×${fmt(bd.hintFactor)}`}
+        good={bd.hintFactor === 1}
+        warn={bd.hintFactor < 1}
+      />
+    </div>
+  );
+}
+
+function Factor({
+  label,
+  value,
+  good,
+  warn,
+  dim,
+}: {
+  label: string;
+  value: string;
+  good?: boolean;
+  warn?: boolean;
+  dim?: boolean;
+}) {
+  const tone = warn
+    ? "text-danger"
+    : good
+      ? "text-success"
+      : dim
+        ? "text-ink"
+        : "text-ink";
+  return (
+    <div className="rounded-lg border border-edge bg-paper-raised px-2 py-1.5">
+      <div className="text-[9px] uppercase tracking-[0.1em] text-ink-faint font-medium">
+        {label}
+      </div>
+      <div className={`mt-0.5 font-mono tabular-nums text-sm ${tone}`}>
+        {value}
+      </div>
+    </div>
+  );
+}
 
 function fmtTime(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -225,7 +300,13 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
             ) : (
               <div className="text-xs text-ink-faint my-3">Calculating score…</div>
             )}
-            <div className="text-sm text-ink-soft mb-6">
+            <ScoreBreakdownStrip
+              difficulty={puzzle.difficulty}
+              elapsedMs={game.state.elapsedMs}
+              mistakes={game.state.mistakes}
+              hintsUsed={game.state.hintsUsed}
+            />
+            <div className="text-sm text-ink-soft mb-6 mt-4">
               {DIFFICULTY_LABEL[puzzle.difficulty]} · {fmtTime(game.state.elapsedMs)} ·{" "}
               {game.state.mistakes} mistake{game.state.mistakes === 1 ? "" : "s"}
               {game.state.hintsUsed > 0 && (

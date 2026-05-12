@@ -35,8 +35,11 @@ const DIFFICULTY_TARGET_MS: Record<Difficulty, number> = {
 
 const MISTAKE_REDUCTION_PER = 0.1;
 const MISTAKE_FACTOR_FLOOR = 0.1;
-const HINT_REDUCTION_PER = 0.15;
-const HINT_FACTOR_FLOOR = 0.3;
+// Hints are now meaningful: -25% per hint, floor 25%. With the 3-hint cap,
+// that means using all 3 cuts your score to a quarter of what it'd be
+// without them. 1 hint = 0.75×, 2 = 0.50×, 3 = 0.25×.
+const HINT_REDUCTION_PER = 0.25;
+const HINT_FACTOR_FLOOR = 0.25;
 const TIME_FACTOR_MIN = 0.3;
 const TIME_FACTOR_MAX = 3.0;
 

@@ -269,8 +269,9 @@ export default async function LeaderboardPage({
                 (floor: 10% of base).
               </li>
               <li>
-                <strong className="text-ink">Hints</strong> cost 15% each (floor:
-                30% of base). Multiplayer modes don&rsquo;t expose hints.
+                <strong className="text-ink">Hints</strong> cost <strong>25% each</strong>:
+                1 hint = 0.75×, 2 = 0.50×, 3 = 0.25×. Multiplayer modes
+                don&rsquo;t expose hints.
               </li>
             </ul>
           </div>
