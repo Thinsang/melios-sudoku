@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 2048 favicon. A single orange tile (the classic "16" tile color)
+       with a bold "2" — small enough that the digit reads clearly even
+       at 16px. -->
+  <rect width="32" height="32" rx="6" fill="#f59563"/>
+  <text
+    x="16" y="24"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    font-size="22"
+    font-weight="700"
+    fill="#f9f6f2"
+  >2</text>
+</svg>

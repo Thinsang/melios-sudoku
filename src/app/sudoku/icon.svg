@@ -1,15 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none">
-  <!-- Purple 3x3 sudoku grid mark for the /sudoku/* section.
-       Same pattern as the in-app BrandMark for visual continuity. -->
-  <g fill="#6d28d9">
-    <rect x="0" y="0" width="3.4" height="3.4" rx="0.6"/>
-    <rect x="4.25" y="0" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
-    <rect x="8.5" y="0" width="3.4" height="3.4" rx="0.6" opacity="0.4"/>
-    <rect x="0" y="4.25" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
-    <rect x="4.25" y="4.25" width="3.4" height="3.4" rx="0.6"/>
-    <rect x="8.5" y="4.25" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
-    <rect x="0" y="8.5" width="3.4" height="3.4" rx="0.6" opacity="0.4"/>
-    <rect x="4.25" y="8.5" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
-    <rect x="8.5" y="8.5" width="3.4" height="3.4" rx="0.6"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Sudoku favicon. Traditional ink-on-paper feel: cream square with a
+       black 3x3 grid, with the center cell filled in brand purple so it
+       stays distinctive at favicon sizes. -->
+  <rect width="32" height="32" rx="6" fill="#faf6ee"/>
+  <!-- Center cell accent -->
+  <rect x="14.5" y="14.5" width="3" height="3" fill="#6d28d9"/>
+  <!-- Outer grid border -->
+  <rect
+    x="6" y="6" width="20" height="20"
+    fill="none" stroke="#1c1916" stroke-width="2.5" stroke-linejoin="round"
+  />
+  <!-- Inner 3x3 division lines -->
+  <g stroke="#1c1916" stroke-width="2" stroke-linecap="round">
+    <line x1="12.66" y1="6" x2="12.66" y2="26"/>
+    <line x1="19.33" y1="6" x2="19.33" y2="26"/>
+    <line x1="6" y1="12.66" x2="26" y2="12.66"/>
+    <line x1="6" y1="19.33" x2="26" y2="19.33"/>
   </g>
 </svg>

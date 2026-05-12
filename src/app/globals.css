@@ -214,9 +214,14 @@ h1, h2, h3 {
   --cell-selected: #fbcad6;
   --cell-related: #fde7ed;
   --cell-match: #f7a3bd;
-  --cell-wrong-bg: #ffeaea;
-  --cell-conflict: #fcd3d3;
-  --cell-conflict-ink: #a40e3c;
+  /* Sakura's overall palette is pink-and-crimson, so a "subtle red" mistake
+     wash is invisible against the theme — and the user-input color is also
+     crimson, so a slightly-darker-crimson mistake text is nearly identical.
+     We use a saturated alarm-red bg + near-black text so wrong cells
+     unmistakably read as "STOP" rather than "another shade of pink". */
+  --cell-wrong-bg: #ff8d99;
+  --cell-conflict: #ff7384;
+  --cell-conflict-ink: #2a0610;
 }
 
 [data-board-theme="midnight"] {
@@ -270,9 +275,11 @@ h1, h2, h3 {
   --cell-selected: #fdd4b8;
   --cell-related: #ffe9d8;
   --cell-match: #f7b08a;
-  --cell-wrong-bg: #fff1f1;
-  --cell-conflict: #fcd3d3;
-  --cell-conflict-ink: #a4282a;
+  /* User-input is orange and the theme is full of warm tones; a dark-red
+     mistake gets lost. Saturated alarm-red bg + near-black text. */
+  --cell-wrong-bg: #ff8a85;
+  --cell-conflict: #ff7570;
+  --cell-conflict-ink: #2a0510;
 }
 
 [data-board-theme="mono"] {
@@ -312,9 +319,12 @@ h1, h2, h3 {
   --cell-selected: #e5d09a;
   --cell-related: #ecdcb0;
   --cell-match: #c89760;
-  --cell-wrong-bg: #f0d4c8;
-  --cell-conflict: #e8bca8;
-  --cell-conflict-ink: #8a2a14;
+  /* Everything in this theme is warm tan/brown so the original muted
+     salmon mistake blended in. Use saturated salmon-red bg + near-black
+     text so wrong cells pop off the cream/brown background. */
+  --cell-wrong-bg: #f49a8e;
+  --cell-conflict: #ed7e72;
+  --cell-conflict-ink: #2a0a08;
 }
 
 [data-board-theme="lavender"] {

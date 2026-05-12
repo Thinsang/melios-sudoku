@@ -111,14 +111,21 @@ export function TwentyFortyEightGame() {
     setGameOver(false);
   }
 
-  // Keyboard input — arrows + WASD.
+  // Keyboard input — arrows, WASD, and vim-style HJKL.
+  // We normalize letter keys via toLowerCase so caps-lock doesn't matter
+  // and modifier-less keypresses are handled identically.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      // Don't steal keystrokes if the user is typing in something focusable.
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName?.toLowerCase();
       if (tag === "input" || tag === "textarea" || target?.isContentEditable) {
         return;
       }
+      // Ignore modifier combos (e.g. Ctrl+W should still close the tab).
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
       const map: Record<string, Direction> = {
         ArrowUp: "up",
         ArrowDown: "down",
@@ -128,12 +135,13 @@ export function TwentyFortyEightGame() {
         s: "down",
         a: "left",
         d: "right",
-        W: "up",
-        S: "down",
-        A: "left",
-        D: "right",
+        // Vim bindings as a bonus.
+        k: "up",
+        j: "down",
+        h: "left",
+        l: "right",
       };
-      const dir = map[e.key];
+      const dir = map[k];
       if (dir) {
         e.preventDefault();
         tryMove(dir);

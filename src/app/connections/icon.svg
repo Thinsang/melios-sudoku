@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Connections favicon. 2x2 grid of the four group-difficulty colors:
+       yellow (easy), green, blue, purple (hardest). Same palette the game
+       uses for solved groups. -->
+  <rect width="32" height="32" rx="6" fill="#faf6ee"/>
+  <rect x="5" y="5" width="10" height="10" rx="1.5" fill="#f5d97a"/>
+  <rect x="17" y="5" width="10" height="10" rx="1.5" fill="#a0c878"/>
+  <rect x="5" y="17" width="10" height="10" rx="1.5" fill="#85c0f9"/>
+  <rect x="17" y="17" width="10" height="10" rx="1.5" fill="#c4a8ea"/>
+</svg>

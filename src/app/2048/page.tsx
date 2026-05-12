@@ -22,8 +22,8 @@ export default function TwentyFortyEightPage() {
             </em>
           </h1>
           <p className="text-sm text-ink-soft mt-2 max-w-xs mx-auto">
-            Slide with arrow keys or swipe. Same-value tiles merge — chase
-            2048 and beyond.
+            Slide with arrow keys, WASD, or swipe. Same-value tiles merge —
+            chase 2048 and beyond.
           </p>
         </div>
 

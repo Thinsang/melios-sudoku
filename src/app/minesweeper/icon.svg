@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Minesweeper favicon. Black bomb circle with a short fuse and a
+       little amber spark. Iconic and instantly recognizable at any size. -->
+  <rect width="32" height="32" rx="6" fill="#faf6ee"/>
+  <!-- Bomb body -->
+  <circle cx="15" cy="19" r="10" fill="#1c1916"/>
+  <!-- Highlight (gives the bomb a sphere look) -->
+  <circle cx="11.5" cy="15.5" r="2.4" fill="#faf6ee" opacity="0.9"/>
+  <!-- Fuse -->
+  <path
+    d="M 17 10 Q 19 7 21 6"
+    stroke="#8a6a40" stroke-width="2" stroke-linecap="round" fill="none"
+  />
+  <!-- Spark -->
+  <circle cx="22" cy="5.5" r="2.2" fill="#f59e0b"/>
+</svg>
