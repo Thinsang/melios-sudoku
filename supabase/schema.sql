@@ -165,6 +165,24 @@ create table if not exists public.cell_locks (
 create index if not exists cell_locks_expires_idx on public.cell_locks (expires_at);
 
 -- =========================================================================
+-- daily_puzzles
+-- One shared sudoku puzzle per day. The difficulty rotates by weekday so the
+-- daily challenge stays interesting (Sundays are the hardest). The first
+-- visitor each day triggers generation; subsequent visitors get the cached
+-- row. Public-read so guests can play; insert is allowed for any authed user
+-- but constrained to today's date (so it can't be backfilled / poisoned).
+-- =========================================================================
+create table if not exists public.daily_puzzles (
+  date         date primary key,
+  difficulty   text not null
+                 check (difficulty in ('easy','medium','hard','expert','extreme')),
+  puzzle       text not null check (char_length(puzzle) = 81),
+  solution     text not null check (char_length(solution) = 81),
+  created_at   timestamptz not null default now()
+);
+create index if not exists daily_puzzles_date_idx on public.daily_puzzles (date desc);
+
+-- =========================================================================
 -- scores  (leaderboard rows — one per completed puzzle, per player)
 -- Anonymous solo plays don't write here; only authed users get persisted.
 -- =========================================================================
@@ -185,6 +203,23 @@ create index if not exists scores_difficulty_score_idx
   on public.scores (difficulty, score desc);
 create index if not exists scores_user_created_idx
   on public.scores (user_id, created_at desc);
+
+-- Daily-puzzle scores carry the date so we can rank "today's daily" and walk
+-- a user's history for streak math. Nullable: non-daily scores stay null.
+alter table public.scores
+  add column if not exists daily_date date;
+create index if not exists scores_daily_date_idx
+  on public.scores (daily_date, score desc) where daily_date is not null;
+create index if not exists scores_user_daily_idx
+  on public.scores (user_id, daily_date desc) where daily_date is not null;
+
+-- One daily entry per user per day. Allows update-if-improved without duping.
+do $$
+begin
+  alter table public.scores
+    add constraint scores_user_daily_unique unique (user_id, daily_date);
+exception when duplicate_table then null; when duplicate_object then null;
+end $$;
 
 -- Allow 'extreme' on older scores tables created before that difficulty existed.
 do $$
@@ -311,6 +346,7 @@ alter table public.player_progress   enable row level security;
 alter table public.moves             enable row level security;
 alter table public.cell_locks        enable row level security;
 alter table public.scores            enable row level security;
+alter table public.daily_puzzles     enable row level security;
 alter table public.friendships       enable row level security;
 alter table public.friend_requests   enable row level security;
 alter table public.game_invites      enable row level security;
@@ -408,6 +444,26 @@ create policy "scores read" on public.scores for select using (true);
 drop policy if exists "scores insert self" on public.scores;
 create policy "scores insert self" on public.scores
   for insert with check (user_id = auth.uid());
+
+-- Daily-score updates (for "improve my time today" semantics).
+drop policy if exists "scores update self daily" on public.scores;
+create policy "scores update self daily" on public.scores
+  for update using (user_id = auth.uid() and daily_date is not null)
+  with check (user_id = auth.uid() and daily_date is not null);
+
+-- daily_puzzles: anyone can read; any authed user can insert today's puzzle
+-- (server action generates the data — RLS bounds inserts to today's date
+-- so an attacker can't backfill / overwrite past or future puzzles).
+drop policy if exists "daily_puzzles read" on public.daily_puzzles;
+create policy "daily_puzzles read" on public.daily_puzzles
+  for select using (true);
+
+drop policy if exists "daily_puzzles insert today" on public.daily_puzzles;
+create policy "daily_puzzles insert today" on public.daily_puzzles
+  for insert with check (
+    date >= (current_date - integer '1')
+    and date <= (current_date + integer '1')
+  );
 
 -- friendships: visible to either side; created by either side.
 drop policy if exists "friendships read" on public.friendships;

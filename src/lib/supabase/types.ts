@@ -121,6 +121,7 @@ export interface Database {
           mistakes: number;
           hints_used: number;
           game_id: string | null;
+          daily_date: string | null;
           created_at: string;
         };
         Insert: {
@@ -132,8 +133,26 @@ export interface Database {
           mistakes?: number;
           hints_used?: number;
           game_id?: string | null;
+          daily_date?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["scores"]["Row"]>;
+        Relationships: [];
+      };
+      daily_puzzles: {
+        Row: {
+          date: string;
+          difficulty: "easy" | "medium" | "hard" | "expert" | "extreme";
+          puzzle: string;
+          solution: string;
+          created_at: string;
+        };
+        Insert: {
+          date: string;
+          difficulty: "easy" | "medium" | "hard" | "expert" | "extreme";
+          puzzle: string;
+          solution: string;
+        };
+        Update: never;
         Relationships: [];
       };
       game_invites: {

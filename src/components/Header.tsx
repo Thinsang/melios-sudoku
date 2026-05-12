@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
+import { getUserStreak } from "@/lib/daily";
 import { HeaderRealtimeWatcher } from "./HeaderRealtimeWatcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { BrandMark } from "./BrandMark";
@@ -10,9 +11,11 @@ export async function Header() {
   const profile = await getCurrentProfile();
 
   let pendingCount = 0;
+  let streakCurrent = 0;
+  let streakCompletedToday = false;
   if (profile) {
     const supabase = await createClient();
-    const [reqCount, inviteCount] = await Promise.all([
+    const [reqCount, inviteCount, streak] = await Promise.all([
       supabase
         .from("friend_requests")
         .select("id", { count: "exact", head: true })
@@ -23,8 +26,11 @@ export async function Header() {
         .select("id", { count: "exact", head: true })
         .eq("to_user", profile.id)
         .eq("status", "pending"),
+      getUserStreak(profile.id),
     ]);
     pendingCount = (reqCount.count ?? 0) + (inviteCount.count ?? 0);
+    streakCurrent = streak.current;
+    streakCompletedToday = streak.completedToday;
   }
 
   return (
@@ -55,6 +61,26 @@ export async function Header() {
         <nav className="flex items-center gap-2 sm:gap-3 text-sm">
           {profile ? (
             <>
+              {streakCurrent > 0 && (
+                <Link
+                  href="/sudoku/daily"
+                  className={
+                    "hidden sm:inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors duration-75 " +
+                    (streakCompletedToday
+                      ? "bg-success-soft text-success hover:bg-success-soft/80"
+                      : "bg-warning-soft text-warning hover:bg-warning-soft/80")
+                  }
+                  title={
+                    streakCompletedToday
+                      ? `${streakCurrent}-day streak — today done`
+                      : `${streakCurrent}-day streak — solve today to keep it`
+                  }
+                >
+                  <span aria-hidden>🔥</span>
+                  <span className="tabular-nums">{streakCurrent}</span>
+                </Link>
+              )}
+              <NavLink href="/sudoku/daily">Daily</NavLink>
               <NavLink href="/sudoku/leaderboard">Leaderboard</NavLink>
               <NavLink href="/sudoku/friends" pendingCount={pendingCount}>
                 Friends
@@ -94,6 +120,7 @@ export async function Header() {
             </>
           ) : (
             <>
+              <NavLink href="/sudoku/daily">Daily</NavLink>
               <NavLink href="/sudoku/leaderboard">Leaderboard</NavLink>
               <ThemeToggle />
               <Link

@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { createClient } from "@/lib/supabase/server";
+import {
+  difficultyForDate,
+  getUserDailyScore,
+  getUserStreak,
+  todayKey,
+} from "@/lib/daily";
 import { JoinByCodeForm } from "./JoinByCodeForm";
 
 // Schema.org structured data for the sudoku app — declared as a VideoGame
@@ -103,6 +109,12 @@ export default async function Home({
     activeGames = data ?? [];
   }
 
+  // Daily snapshot — difficulty + (if signed in) streak + today's status.
+  const today = await todayKey();
+  const dailyDifficulty = await difficultyForDate(today);
+  const dailyScore = user ? await getUserDailyScore(user.id, today) : null;
+  const streak = user ? await getUserStreak(user.id) : null;
+
   return (
     <main className="flex flex-1 flex-col items-center px-5 sm:px-6 py-10 sm:py-16">
       <script
@@ -138,6 +150,49 @@ export default async function Home({
             A calm, focused sudoku you can share. Pick a difficulty, or invite someone in.
           </p>
         </section>
+
+        {/* Daily puzzle — keystone retention. Always visible, prominent. */}
+        <Link
+          href="/sudoku/daily"
+          className="group block rounded-2xl border border-brand/40 bg-gradient-to-br from-brand-soft via-paper to-paper p-5 sm:p-6 hover:border-brand hover:shadow-[var(--shadow-lifted)] transition-all duration-150"
+        >
+          <div className="flex items-center gap-5">
+            <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-warning-soft text-warning flex items-center justify-center text-2xl sm:text-3xl">
+              🔥
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="text-[11px] uppercase tracking-[0.18em] text-brand font-semibold">
+                  Daily challenge
+                </div>
+                {dailyScore ? (
+                  <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full bg-success-soft text-success font-medium">
+                    Done today
+                  </span>
+                ) : (
+                  <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full bg-brand-soft text-brand font-medium">
+                    {DIFFICULTY_LABEL[dailyDifficulty]}
+                  </span>
+                )}
+              </div>
+              <div className="font-display text-xl sm:text-2xl text-ink mt-1 leading-tight">
+                {dailyScore
+                  ? `Your best today: ${dailyScore.score.toLocaleString()}`
+                  : "Today's puzzle — same for everyone"}
+              </div>
+              <div className="text-sm text-ink-soft mt-1">
+                {streak && streak.current > 0
+                  ? `${streak.current}-day streak · ${
+                      streak.completedToday
+                        ? "kept alive"
+                        : "solve today to keep it going"
+                    }`
+                  : "Build a streak. Climb the daily leaderboard."}
+              </div>
+            </div>
+            <ArrowIcon className="hidden sm:block text-ink-faint group-hover:text-brand group-hover:translate-x-0.5 transition-all duration-100" />
+          </div>
+        </Link>
 
         {activeGames.length > 0 && (
           <Section title="Resume" hint="Picked up from where you left off.">

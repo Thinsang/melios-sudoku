@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTIES, DIFFICULTY_LABEL } from "@/lib/sudoku";
+import { getUserStreak } from "@/lib/daily";
 import { ProfileEndGameButton } from "./ProfileEndGameButton";
 
 function fmtTime(ms: number) {
@@ -19,6 +20,18 @@ export default async function ProfilePage() {
   if (!profile) redirect("/sudoku/auth/sign-in?next=/sudoku/profile");
 
   const supabase = await createClient();
+
+  const streak = await getUserStreak(profile.id);
+
+  // Best daily score across all completions.
+  const { data: dailyRows } = await supabase
+    .from("scores")
+    .select("score, daily_date")
+    .eq("user_id", profile.id)
+    .not("daily_date", "is", null)
+    .order("score", { ascending: false })
+    .limit(1);
+  const bestDaily = dailyRows && dailyRows.length > 0 ? dailyRows[0] : null;
 
   const { data: rows } = await supabase
     .from("game_players")
@@ -75,6 +88,50 @@ export default async function ProfilePage() {
             <span className="text-ink-faint">@{profile.username}</span>
           </div>
         </div>
+
+        <Section title="Daily">
+          <Link
+            href="/sudoku/daily"
+            className="group block rounded-xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] transition-all duration-100 p-4 sm:p-5"
+          >
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="shrink-0 w-12 h-12 rounded-full bg-warning-soft text-warning flex items-center justify-center text-xl">
+                🔥
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-2 flex-wrap">
+                  <div className="font-display text-2xl text-ink tabular-nums leading-tight">
+                    {streak.current} {streak.current === 1 ? "day" : "days"}
+                  </div>
+                  <span className="text-xs text-ink-faint">
+                    current streak · best {streak.longest}
+                  </span>
+                </div>
+                <div className="text-sm text-ink-soft mt-0.5">
+                  {streak.completedToday ? (
+                    <span className="text-success font-medium">
+                      ✓ Today done — streak locked in
+                    </span>
+                  ) : streak.current > 0 ? (
+                    "Solve today's puzzle to extend it."
+                  ) : (
+                    "Start a streak by solving today's puzzle."
+                  )}
+                </div>
+              </div>
+              {bestDaily && (
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+                    Best daily
+                  </div>
+                  <div className="font-display text-lg text-brand tabular-nums">
+                    {bestDaily.score.toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Link>
+        </Section>
 
         <Section title="Stats">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
