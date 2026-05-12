@@ -1,13 +1,14 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Melio Games — Sudoku, Wordle, Crossword & more";
+export const alt =
+  "Melio Games — Sudoku, Wordle, Connections, Minesweeper, 2048";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 /**
  * Open Graph card for the Melio Games hub. 1200x630. Composition: bold serif
  * title block on the left, a fanned stack of three game-preview tiles on
- * the right (Sudoku in front, Wordle and Crossword behind). Built with
+ * the right (Sudoku in front, Wordle and Connections behind). Built with
  * nested flex layouts — next/og's Satori renderer doesn't support CSS grid.
  */
 export default async function OpenGraphImage() {
@@ -70,7 +71,7 @@ export default async function OpenGraphImage() {
               display: "flex",
             }}
           >
-            Free puzzle games. Sudoku, Wordle, Crossword & more.
+            Sudoku · Wordle · Connections · Minesweeper · 2048
           </div>
           <div
             style={{
@@ -151,7 +152,7 @@ export default async function OpenGraphImage() {
             ))}
           </div>
 
-          {/* Crossword — bottom, slight left rotation, middle z */}
+          {/* Connections-style 4x4 colored grid — bottom right, slight rotation */}
           <div
             style={{
               position: "absolute",
@@ -159,42 +160,52 @@ export default async function OpenGraphImage() {
               right: 40,
               display: "flex",
               flexDirection: "column",
+              gap: 4,
               transform: "rotate(6deg)",
-              border: "3px solid #1c1916",
-              borderRadius: 6,
-              background: "#1c1916",
               boxShadow: "0 10px 24px rgba(28,25,22,0.14)",
+              padding: 6,
+              background: "#1c1916",
+              borderRadius: 8,
             }}
           >
             {[
-              [{ v: "M", bg: "#ffffff" }, { v: "", bg: "#ffffff" }, { v: "", bg: "#1c1916" }, { v: "C", bg: "#ffffff" }],
-              [{ v: "E", bg: "#ffffff" }, { v: "", bg: "#1c1916" }, { v: "", bg: "#ffffff" }, { v: "A", bg: "#ffffff" }],
-              [{ v: "L", bg: "#ffffff" }, { v: "I", bg: "#ffffff" }, { v: "F", bg: "#ffffff" }, { v: "T", bg: "#ffffff" }],
-              [{ v: "I", bg: "#ffffff" }, { v: "", bg: "#1c1916" }, { v: "", bg: "#ffffff" }, { v: "S", bg: "#ffffff" }],
+              [
+                { bg: "#f5d97a" },
+                { bg: "#a0c878" },
+                { bg: "#f5d97a" },
+                { bg: "#85c0f9" },
+              ],
+              [
+                { bg: "#c4a8ea" },
+                { bg: "#f5d97a" },
+                { bg: "#85c0f9" },
+                { bg: "#a0c878" },
+              ],
+              [
+                { bg: "#a0c878" },
+                { bg: "#85c0f9" },
+                { bg: "#c4a8ea" },
+                { bg: "#f5d97a" },
+              ],
+              [
+                { bg: "#85c0f9" },
+                { bg: "#c4a8ea" },
+                { bg: "#a0c878" },
+                { bg: "#c4a8ea" },
+              ],
             ].map((row, r) => (
-              <div
-                key={r}
-                style={{ display: "flex", marginBottom: r < 3 ? 1 : 0 }}
-              >
+              <div key={r} style={{ display: "flex", gap: 4 }}>
                 {row.map((c, ci) => (
                   <div
                     key={ci}
                     style={{
-                      width: 36,
-                      height: 36,
+                      width: 38,
+                      height: 38,
                       background: c.bg,
-                      color: "#1c1916",
-                      fontSize: 18,
-                      fontWeight: 700,
-                      fontFamily: "sans-serif",
+                      borderRadius: 4,
                       display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: ci < 3 ? 1 : 0,
                     }}
-                  >
-                    {c.v}
-                  </div>
+                  />
                 ))}
               </div>
             ))}
