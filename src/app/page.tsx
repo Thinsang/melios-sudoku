@@ -1,8 +1,13 @@
 import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
-import { getCurrentProfile } from "@/lib/auth/server";
+import { getCurrentProfile, getUser } from "@/lib/auth/server";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { SiteFooter } from "@/components/SiteFooter";
+import { getUserDailyScore, getUserStreak, todayKey } from "@/lib/daily";
+import {
+  getMyWordleResult,
+  getUserWordleStreak,
+} from "@/lib/wordle/actions";
 
 // Schema.org Organization + WebSite structured data. Helps Google understand
 // what the site is and surface sitelinks under search results.
@@ -36,8 +41,20 @@ const STRUCTURED_DATA = {
  */
 export default async function MeliosGamesHub() {
   const profile = await getCurrentProfile();
+  const user = await getUser();
   // Signed in → username (the unique @handle). Signed out → "Player 1".
   const greetingName = profile?.username ?? "Player 1";
+
+  // Today snapshot for signed-in users — what's left to play.
+  const today = user ? await todayKey() : null;
+  const [sudokuDone, sudokuStreak, wordleDone, wordleStreak] = user
+    ? await Promise.all([
+        getUserDailyScore(user.id, today!),
+        getUserStreak(user.id),
+        getMyWordleResult(today!),
+        getUserWordleStreak(user.id),
+      ])
+    : [null, null, null, null];
 
   return (
     <>
@@ -58,6 +75,45 @@ export default async function MeliosGamesHub() {
               </em>
             </h1>
           </section>
+
+          {/* Today snapshot — signed-in users only */}
+          {user && (
+            <section className="flex flex-col gap-4">
+              <h2 className="font-display text-xs uppercase tracking-[0.18em] text-ink-faint">
+                Today
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <TodayCard
+                  title="Daily Sudoku"
+                  href="/sudoku/daily"
+                  done={Boolean(sudokuDone)}
+                  doneLabel={
+                    sudokuDone
+                      ? `${sudokuDone.score.toLocaleString()} pts`
+                      : undefined
+                  }
+                  streak={sudokuStreak?.current ?? 0}
+                  streakLive={Boolean(sudokuStreak?.completedToday)}
+                  ctaLabel={sudokuDone ? "Replay" : "Play"}
+                />
+                <TodayCard
+                  title="Daily Wordle"
+                  href="/wordle"
+                  done={Boolean(wordleDone)}
+                  doneLabel={
+                    wordleDone
+                      ? wordleDone.won
+                        ? `${wordleDone.guesses}/6`
+                        : "X/6"
+                      : undefined
+                  }
+                  streak={wordleStreak?.current ?? 0}
+                  streakLive={Boolean(wordleStreak?.completedToday)}
+                  ctaLabel={wordleDone ? "Review" : "Play"}
+                />
+              </div>
+            </section>
+          )}
 
           {/* Featured game */}
           <section className="flex flex-col gap-4">
@@ -473,6 +529,100 @@ function ConnectionsPreview() {
 }
 
 /** Minesweeper preview — small grid with numbers and a flag. */
+function TodayCard({
+  title,
+  href,
+  done,
+  doneLabel,
+  streak,
+  streakLive,
+  ctaLabel,
+}: {
+  title: string;
+  href: string;
+  done: boolean;
+  doneLabel?: string;
+  streak: number;
+  streakLive: boolean;
+  ctaLabel: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={
+        "group flex items-center gap-4 p-4 sm:p-5 rounded-2xl border transition-all duration-150 " +
+        (done
+          ? "border-success/30 bg-success-soft hover:border-success/50"
+          : "border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] hover:-translate-y-px")
+      }
+    >
+      <div
+        className={
+          "shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-xl " +
+          (done
+            ? "bg-success/15 text-success"
+            : "bg-brand-soft text-brand")
+        }
+      >
+        {done ? (
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        ) : (
+          "▶"
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap">
+          <h3 className="font-display text-lg text-ink leading-tight">
+            {title}
+          </h3>
+          {done && doneLabel && (
+            <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full bg-paper text-ink-soft border border-edge font-medium tabular-nums">
+              {doneLabel}
+            </span>
+          )}
+        </div>
+        <div className="text-xs text-ink-soft mt-0.5">
+          {done ? (
+            "Done · come back tomorrow"
+          ) : streak > 0 ? (
+            <>
+              <span
+                className={streakLive ? "text-warning" : "text-ink-soft"}
+              >
+                🔥 {streak}-day streak
+              </span>{" "}
+              · {streakLive ? "kept" : "play to keep"}
+            </>
+          ) : (
+            "Build a new streak"
+          )}
+        </div>
+      </div>
+      <span
+        className={
+          "shrink-0 hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium transition-colors duration-75 " +
+          (done
+            ? "text-ink-soft border border-edge bg-paper group-hover:bg-paper-raised"
+            : "bg-brand text-brand-ink group-hover:bg-brand-hover")
+        }
+      >
+        {ctaLabel}
+      </span>
+    </Link>
+  );
+}
+
 function ArrowIcon({ className }: { className?: string }) {
   return (
     <svg
