@@ -220,6 +220,53 @@ create table if not exists public.friend_requests (
 );
 create index if not exists friend_requests_to_idx on public.friend_requests (to_user, status);
 
+-- When a recipient flips a request to 'accepted', auto-create *both*
+-- directions of the friendship. This runs as SECURITY DEFINER so it can
+-- bypass the RLS policy on `friendships` that otherwise only lets you
+-- insert your own direction (which broke the sender's view).
+create or replace function public.on_friend_request_accepted()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if new.status = 'accepted'
+     and (old.status is null or old.status <> 'accepted') then
+    insert into public.friendships (user_id, friend_id)
+    values
+      (new.from_user, new.to_user),
+      (new.to_user, new.from_user)
+    on conflict (user_id, friend_id) do nothing;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_friend_request_accepted on public.friend_requests;
+create trigger trg_friend_request_accepted
+  after update of status on public.friend_requests
+  for each row execute function public.on_friend_request_accepted();
+
+-- Backfill: repair one-sided friendships caused by the original implementation
+-- that tried to insert both directions from the client (the sender's direction
+-- got blocked by RLS). Re-run-safe via ON CONFLICT.
+do $$
+begin
+  insert into public.friendships (user_id, friend_id)
+  select from_user, to_user
+  from public.friend_requests
+  where status = 'accepted'
+  on conflict (user_id, friend_id) do nothing;
+
+  insert into public.friendships (user_id, friend_id)
+  select to_user, from_user
+  from public.friend_requests
+  where status = 'accepted'
+  on conflict (user_id, friend_id) do nothing;
+exception when others then null;
+end $$;
+
 -- =========================================================================
 -- game_invites
 -- A friend can be invited to a specific game. The invite shows up in their

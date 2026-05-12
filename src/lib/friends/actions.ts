@@ -79,13 +79,14 @@ async function acceptFriendRequestById(reqId: string) {
     .maybeSingle();
   if (!req || req.to_user !== user.id || req.status !== "pending") return;
 
-  await supabase.from("friend_requests").update({ status: "accepted" }).eq("id", reqId);
+  // Flip the request to 'accepted'. The `trg_friend_request_accepted` trigger
+  // in the DB then writes both directions of the friendship under
+  // SECURITY DEFINER — which is the part RLS was blocking before, and why
+  // the sender wasn't seeing the new friend in their list.
   await supabase
-    .from("friendships")
-    .upsert([
-      { user_id: req.from_user, friend_id: req.to_user },
-      { user_id: req.to_user, friend_id: req.from_user },
-    ]);
+    .from("friend_requests")
+    .update({ status: "accepted" })
+    .eq("id", reqId);
 }
 
 export async function acceptFriendRequest(formData: FormData) {
