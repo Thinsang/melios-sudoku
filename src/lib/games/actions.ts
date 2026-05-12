@@ -7,6 +7,7 @@ import { getOrCreateGuestId, setGuestName as setGuestNameCookie } from "@/lib/gu
 import {
   DIFFICULTIES,
   Difficulty,
+  calculateScore,
   encodeBoard,
   generatePuzzle,
 } from "@/lib/sudoku";
@@ -323,6 +324,13 @@ export async function finishRace(
   } = await supabase.auth.getUser();
   if (!user) return; // Guests can't write here under RLS.
 
+  // Need difficulty to compute the score before stamping the player row.
+  const { data: game } = await supabase
+    .from("games")
+    .select("mode, status, difficulty")
+    .eq("id", gameId)
+    .maybeSingle();
+
   await supabase
     .from("game_players")
     .update({
@@ -333,12 +341,26 @@ export async function finishRace(
     })
     .eq("id", playerRowId);
 
+  if (game) {
+    const score = calculateScore(
+      game.difficulty as Difficulty,
+      finishTimeMs,
+      mistakes,
+      0
+    );
+    await supabase.from("scores").insert({
+      user_id: user.id,
+      difficulty: game.difficulty as Difficulty,
+      mode: "race",
+      score,
+      elapsed_ms: finishTimeMs,
+      mistakes,
+      hints_used: 0,
+      game_id: gameId,
+    });
+  }
+
   // If this is the first finisher in race mode, mark game completed.
-  const { data: game } = await supabase
-    .from("games")
-    .select("mode, status")
-    .eq("id", gameId)
-    .maybeSingle();
   if (game?.mode === "race" && game.status === "active") {
     await supabase
       .from("games")
@@ -389,14 +411,91 @@ export async function abandonGame(gameId: string, redirectTo: string = "/") {
 
 export async function finishCoop(gameId: string, mistakes: number) {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Need game.difficulty + game.started_at for scoring.
+  const { data: game } = await supabase
+    .from("games")
+    .select("difficulty, started_at, mode")
+    .eq("id", gameId)
+    .maybeSingle();
+
   await supabase
     .from("games")
     .update({ status: "completed", completed_at: new Date().toISOString() })
     .eq("id", gameId);
-  // Stamp the latest mistake count on every active player.
+
   await supabase
     .from("game_players")
     .update({ finished_at: new Date().toISOString(), mistakes })
     .eq("game_id", gameId)
     .is("finished_at", null);
+
+  // Each player's client fires finishCoop once; record a score row for the
+  // caller (so each participant gets their own leaderboard entry).
+  if (user && game && (game.mode === "coop" || game.mode === "solo")) {
+    const elapsedMs = game.started_at
+      ? Date.now() - Date.parse(game.started_at)
+      : 0;
+    const score = calculateScore(
+      game.difficulty as Difficulty,
+      elapsedMs,
+      mistakes,
+      0
+    );
+    await supabase.from("scores").insert({
+      user_id: user.id,
+      difficulty: game.difficulty as Difficulty,
+      mode: game.mode as "coop" | "solo",
+      score,
+      elapsed_ms: elapsedMs,
+      mistakes,
+      hints_used: 0,
+      game_id: gameId,
+    });
+  }
+}
+
+/**
+ * Solo quick-play scoring entrypoint — called by SoloGame when a player
+ * completes a /play?d=... puzzle. Anonymous players get the score computed
+ * but nothing is persisted. Authed players get a leaderboard row.
+ */
+export interface SoloScoreResult {
+  score: number;
+  saved: boolean;
+}
+
+export async function recordSoloScore(payload: {
+  difficulty: Difficulty;
+  elapsedMs: number;
+  mistakes: number;
+  hintsUsed: number;
+}): Promise<SoloScoreResult> {
+  const { difficulty, elapsedMs, mistakes, hintsUsed } = payload;
+  if (!DIFFICULTIES.includes(difficulty)) {
+    return { score: 0, saved: false };
+  }
+  const score = calculateScore(difficulty, elapsedMs, mistakes, hintsUsed);
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { score, saved: false };
+
+  await supabase.from("scores").insert({
+    user_id: user.id,
+    difficulty,
+    mode: "solo",
+    score,
+    elapsed_ms: elapsedMs,
+    mistakes,
+    hints_used: hintsUsed,
+  });
+
+  return { score, saved: true };
 }

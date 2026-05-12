@@ -165,6 +165,37 @@ create table if not exists public.cell_locks (
 create index if not exists cell_locks_expires_idx on public.cell_locks (expires_at);
 
 -- =========================================================================
+-- scores  (leaderboard rows — one per completed puzzle, per player)
+-- Anonymous solo plays don't write here; only authed users get persisted.
+-- =========================================================================
+create table if not exists public.scores (
+  id           uuid primary key default gen_random_uuid(),
+  user_id      uuid not null references public.profiles on delete cascade,
+  difficulty   text not null
+                 check (difficulty in ('easy','medium','hard','expert','extreme')),
+  mode         text not null check (mode in ('solo','coop','race')),
+  score        int not null check (score >= 0),
+  elapsed_ms   bigint not null,
+  mistakes     int not null default 0,
+  hints_used   int not null default 0,
+  game_id      uuid references public.games on delete set null,
+  created_at   timestamptz not null default now()
+);
+create index if not exists scores_difficulty_score_idx
+  on public.scores (difficulty, score desc);
+create index if not exists scores_user_created_idx
+  on public.scores (user_id, created_at desc);
+
+-- Allow 'extreme' on older scores tables created before that difficulty existed.
+do $$
+begin
+  alter table public.scores drop constraint if exists scores_difficulty_check;
+  alter table public.scores add constraint scores_difficulty_check
+    check (difficulty in ('easy','medium','hard','expert','extreme'));
+exception when others then null;
+end $$;
+
+-- =========================================================================
 -- friendships  (mutual: one row per direction)
 -- =========================================================================
 create table if not exists public.friendships (
@@ -232,6 +263,7 @@ alter table public.game_players      enable row level security;
 alter table public.player_progress   enable row level security;
 alter table public.moves             enable row level security;
 alter table public.cell_locks        enable row level security;
+alter table public.scores            enable row level security;
 alter table public.friendships       enable row level security;
 alter table public.friend_requests   enable row level security;
 alter table public.game_invites      enable row level security;
@@ -321,6 +353,14 @@ drop policy if exists "cell_locks write" on public.cell_locks;
 create policy "cell_locks write" on public.cell_locks
   for all using (public.is_game_player(game_id))
   with check (public.is_game_player(game_id));
+
+-- scores: public read (it's a leaderboard); insert only for self.
+drop policy if exists "scores read" on public.scores;
+create policy "scores read" on public.scores for select using (true);
+
+drop policy if exists "scores insert self" on public.scores;
+create policy "scores insert self" on public.scores
+  for insert with check (user_id = auth.uid());
 
 -- friendships: visible to either side; created by either side.
 drop policy if exists "friendships read" on public.friendships;

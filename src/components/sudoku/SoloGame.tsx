@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DIFFICULTY_LABEL,
   Difficulty,
@@ -9,6 +9,7 @@ import {
   generatePuzzle,
 } from "@/lib/sudoku";
 import { MAX_HINTS, useSudokuGame } from "@/lib/sudoku/useSudokuGame";
+import { recordSoloScore, type SoloScoreResult } from "@/lib/games/actions";
 import { SudokuBoard } from "./SudokuBoard";
 import { NumberPad } from "./NumberPad";
 
@@ -82,6 +83,24 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
   const [noteMode, setNoteMode] = useState(false);
   const game = useSudokuGame(puzzle);
   const notStarted = !game.state.started;
+
+  const [scoreResult, setScoreResult] = useState<SoloScoreResult | null>(null);
+  const scoreRecordedRef = useRef(false);
+
+  useEffect(() => {
+    if (!game.complete || scoreRecordedRef.current) return;
+    scoreRecordedRef.current = true;
+    void recordSoloScore({
+      difficulty: puzzle.difficulty,
+      elapsedMs: game.state.elapsedMs,
+      mistakes: game.state.mistakes,
+      hintsUsed: game.state.hintsUsed,
+    })
+      .then(setScoreResult)
+      .catch((err) => {
+        console.warn("recordSoloScore failed:", err);
+      });
+  }, [game.complete, puzzle.difficulty, game.state.elapsedMs, game.state.mistakes, game.state.hintsUsed]);
 
   return (
     <div className="w-full max-w-[min(94vw,560px)] mx-auto flex flex-col gap-5">
@@ -193,9 +212,19 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 className="font-display text-2xl text-ink mb-1">
-              Solved
-            </h2>
+            <h2 className="font-display text-2xl text-ink mb-1">Solved</h2>
+            {scoreResult ? (
+              <>
+                <div className="font-display text-5xl sm:text-6xl text-brand my-3 tabular-nums">
+                  {scoreResult.score.toLocaleString()}
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium mb-3">
+                  {scoreResult.saved ? "Saved to leaderboard" : "Sign in to save"}
+                </div>
+              </>
+            ) : (
+              <div className="text-xs text-ink-faint my-3">Calculating score…</div>
+            )}
             <div className="text-sm text-ink-soft mb-6">
               {DIFFICULTY_LABEL[puzzle.difficulty]} · {fmtTime(game.state.elapsedMs)} ·{" "}
               {game.state.mistakes} mistake{game.state.mistakes === 1 ? "" : "s"}
@@ -206,7 +235,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
                 </>
               )}
             </div>
-            <div className="flex gap-2.5 justify-center">
+            <div className="flex gap-2.5 justify-center flex-wrap">
               <button
                 type="button"
                 onClick={onNewGame}
@@ -214,6 +243,12 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
               >
                 Play another
               </button>
+              <Link
+                href={`/leaderboard?d=${puzzle.difficulty}`}
+                className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+              >
+                Leaderboard
+              </Link>
               <Link
                 href="/"
                 className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"

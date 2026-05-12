@@ -110,6 +110,32 @@ export interface Database {
         Update: { status?: "pending" | "accepted" | "declined" };
         Relationships: [];
       };
+      scores: {
+        Row: {
+          id: string;
+          user_id: string;
+          difficulty: "easy" | "medium" | "hard" | "expert" | "extreme";
+          mode: "solo" | "coop" | "race";
+          score: number;
+          elapsed_ms: number;
+          mistakes: number;
+          hints_used: number;
+          game_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          difficulty: "easy" | "medium" | "hard" | "expert" | "extreme";
+          mode: "solo" | "coop" | "race";
+          score: number;
+          elapsed_ms: number;
+          mistakes?: number;
+          hints_used?: number;
+          game_id?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["scores"]["Row"]>;
+        Relationships: [];
+      };
       game_invites: {
         Row: {
           id: string;

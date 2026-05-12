@@ -15,6 +15,8 @@ import {
   Board,
   CellValue,
   DIFFICULTY_LABEL,
+  Difficulty,
+  calculateScore,
   clearNotesInPeers,
   decodeBoard,
   encodeBoard,
@@ -646,6 +648,19 @@ export function GameRoom({
   const showRaceFinishBanner = isRace && (complete || winner != null);
   const iWon = isRace && winner?.id === me.id;
 
+  // Local score readout — same formula the server runs in finishRace/finishCoop.
+  // We compute it locally for instant display; the canonical row is written
+  // by the server action.
+  const myScore = useMemo(() => {
+    if (!complete) return null;
+    return calculateScore(
+      game.difficulty as Difficulty,
+      elapsed,
+      mistakes,
+      0 // multiplayer modes don't expose hints
+    );
+  }, [complete, game.difficulty, elapsed, mistakes]);
+
   function copyInvite() {
     if (typeof window === "undefined") return;
     const link = `${window.location.origin}/play/${game.id}`;
@@ -705,9 +720,11 @@ export function GameRoom({
           iWon={iWon}
           myComplete={complete}
           myTime={myFinishedAt ? elapsed : null}
+          myScore={myScore}
           winnerName={winner?.display_name ?? null}
           winnerTime={winner?.finish_time_ms ?? null}
           allFinished={allFinished}
+          difficulty={game.difficulty as Difficulty}
         />
       )}
 
@@ -917,16 +934,32 @@ export function GameRoom({
               </svg>
             </div>
             <h2 className="font-display text-2xl text-ink mb-1">Solved</h2>
+            {myScore !== null && (
+              <>
+                <div className="font-display text-5xl sm:text-6xl text-brand my-3 tabular-nums">
+                  {myScore.toLocaleString()}
+                </div>
+                <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium mb-3">
+                  Saved to leaderboard
+                </div>
+              </>
+            )}
             <div className="text-sm text-ink-soft mb-6">
               {DIFFICULTY_LABEL[game.difficulty as keyof typeof DIFFICULTY_LABEL]} ·{" "}
               {fmtTime(elapsed)} · {mistakes} mistake{mistakes === 1 ? "" : "s"}
             </div>
-            <div className="flex gap-2.5 justify-center">
+            <div className="flex gap-2.5 justify-center flex-wrap">
               <Link
                 href="/new-game"
                 className="px-5 py-2.5 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
               >
                 New game
+              </Link>
+              <Link
+                href={`/leaderboard?d=${game.difficulty}`}
+                className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+              >
+                Leaderboard
               </Link>
               <Link
                 href="/"
@@ -950,16 +983,20 @@ function RaceFinishBanner({
   iWon,
   myComplete,
   myTime,
+  myScore,
   winnerName,
   winnerTime,
   allFinished,
+  difficulty,
 }: {
   iWon: boolean;
   myComplete: boolean;
   myTime: number | null;
+  myScore: number | null;
   winnerName: string | null;
   winnerTime: number | null;
   allFinished: boolean;
+  difficulty: Difficulty;
 }) {
   // Three states:
   //  - I won (or am the only one done so far)
@@ -1008,15 +1045,31 @@ function RaceFinishBanner({
       <div className="flex-1 min-w-0">
         <div className="font-display text-base text-ink leading-tight">{title}</div>
         <div className="text-sm text-ink-soft mt-0.5">{subtitle}</div>
+        {myComplete && myScore !== null && (
+          <div className="mt-1 text-xs text-ink-faint">
+            Score{" "}
+            <span className="font-mono tabular-nums text-brand font-semibold">
+              {myScore.toLocaleString()}
+            </span>
+          </div>
+        )}
       </div>
-      {allFinished && (
+      <div className="shrink-0 flex flex-col gap-1.5">
         <Link
-          href="/new-game"
-          className="shrink-0 px-3 py-1.5 rounded-md bg-brand hover:bg-brand-hover text-brand-ink text-xs font-medium transition-colors duration-75"
+          href={`/leaderboard?d=${difficulty}`}
+          className="px-3 py-1.5 rounded-md border border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised text-xs font-medium transition-colors duration-75"
         >
-          New game
+          Leaderboard
         </Link>
-      )}
+        {allFinished && (
+          <Link
+            href="/new-game"
+            className="px-3 py-1.5 rounded-md bg-brand hover:bg-brand-hover text-brand-ink text-xs font-medium transition-colors duration-75 text-center"
+          >
+            New game
+          </Link>
+        )}
+      </div>
     </div>
   );
 }

@@ -45,6 +45,7 @@ export async function Header() {
         <nav className="flex items-center gap-2 sm:gap-3 text-sm">
           {profile ? (
             <>
+              <NavLink href="/leaderboard">Leaderboard</NavLink>
               <NavLink href="/friends" pendingCount={pendingCount}>
                 Friends
               </NavLink>
@@ -83,6 +84,7 @@ export async function Header() {
             </>
           ) : (
             <>
+              <NavLink href="/leaderboard">Leaderboard</NavLink>
               <ThemeToggle />
               <Link
                 href="/auth/sign-in"
