@@ -39,9 +39,24 @@ export default function AboutPage() {
                 Melio Sudoku
               </Link>
               : five difficulties, live multiplayer races, co-op solving on a
-              shared board, a daily puzzle with streaks, and a leaderboard. More
-              games are coming — Wordle, crossword, connections — built with
-              the same restraint.
+              shared board, a daily puzzle with streaks, and a leaderboard.
+              Alongside it,{" "}
+              <Link href="/wordle" className="text-brand hover:underline">
+                Wordle
+              </Link>
+              ,{" "}
+              <Link href="/connections" className="text-brand hover:underline">
+                Connections
+              </Link>
+              ,{" "}
+              <Link href="/minesweeper" className="text-brand hover:underline">
+                Minesweeper
+              </Link>
+              , and{" "}
+              <Link href="/2048" className="text-brand hover:underline">
+                2048
+              </Link>{" "}
+              — each built with the same restraint.
             </p>
             <h2 className="font-display text-2xl text-ink mt-2">
               What we&rsquo;re about

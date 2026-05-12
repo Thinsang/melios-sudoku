@@ -31,11 +31,11 @@ const SITE_URL = "https://meliogames.com";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Melio Games — Sudoku, Wordle, Crossword & more",
+    default: "Melio Games — Sudoku, Wordle, Connections, Minesweeper, 2048",
     template: "%s · Melio Games",
   },
   description:
-    "Play free online puzzle games at Melio Games. Multiplayer sudoku with friends, races, co-op, and leaderboards. More games coming.",
+    "Free online puzzle games at Melio Games. Multiplayer sudoku, daily wordle, daily connections, classic minesweeper, and 2048. No ads, no tracking, just calm puzzles.",
   keywords: [
     "sudoku online",
     "multiplayer sudoku",
@@ -43,6 +43,11 @@ export const metadata: Metadata = {
     "free sudoku",
     "sudoku race",
     "sudoku co-op",
+    "wordle online",
+    "free wordle",
+    "connections puzzle",
+    "minesweeper online",
+    "2048 game",
     "puzzle games",
     "melio games",
     "melio sudoku",
@@ -54,9 +59,9 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Melio Games — Sudoku, Wordle, Crossword & more",
+    title: "Melio Games — Sudoku, Wordle, Connections, Minesweeper, 2048",
     description:
-      "Play free online puzzle games. Multiplayer sudoku with friends, races, co-op, leaderboards.",
+      "Free online puzzle games. Multiplayer sudoku, daily wordle, connections, minesweeper, 2048.",
     url: SITE_URL,
     type: "website",
     siteName: "Melio Games",
@@ -66,7 +71,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Melio Games",
     description:
-      "Free online puzzle games. Multiplayer sudoku with friends. More games coming.",
+      "Free online puzzle games. Sudoku, Wordle, Connections, Minesweeper, 2048.",
   },
   robots: {
     index: true,

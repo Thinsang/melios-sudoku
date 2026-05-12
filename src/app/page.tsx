@@ -188,33 +188,41 @@ export default async function MeliosGamesHub() {
             <SudokuFeatureCard />
           </section>
 
-          {/* Wordle — now live */}
+          {/* Other games */}
           <section className="flex flex-col gap-4">
             <h2 className="font-display text-xs uppercase tracking-[0.18em] text-ink-faint">
               Also playing
             </h2>
-            <Link
-              href="/wordle"
-              className="group flex items-center gap-4 sm:gap-6 p-4 sm:p-5 rounded-2xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] hover:-translate-y-px transition-all duration-150"
-            >
-              <div className="flex items-center justify-center bg-paper-raised border border-edge rounded-xl py-3 px-3 sm:py-4 sm:px-4 shrink-0">
-                <WordlePreview />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-display text-2xl sm:text-3xl text-ink group-hover:text-brand transition-colors duration-75">
-                    Wordle
-                  </h3>
-                  <span className="text-[10px] uppercase tracking-[0.12em] px-2 py-0.5 rounded-full bg-success-soft text-success font-medium">
-                    Daily
-                  </span>
-                </div>
-                <p className="text-sm text-ink-soft mt-1">
-                  Five letters. Six guesses. A new word every day.
-                </p>
-              </div>
-              <ArrowIcon className="hidden sm:block text-ink-faint group-hover:text-brand group-hover:translate-x-0.5 transition-all duration-100" />
-            </Link>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <GameCard
+                href="/wordle"
+                name="Wordle"
+                blurb="Five letters. Six guesses."
+                tags={["Daily", "Word"]}
+                preview={<WordlePreview />}
+              />
+              <GameCard
+                href="/connections"
+                name="Connections"
+                blurb="Group 16 words into 4 sets."
+                tags={["Daily", "Word"]}
+                preview={<ConnectionsPreview />}
+              />
+              <GameCard
+                href="/minesweeper"
+                name="Minesweeper"
+                blurb="Classic logic. First click is safe."
+                tags={["Logic", "Solo"]}
+                preview={<MinesweeperPreview />}
+              />
+              <GameCard
+                href="/2048"
+                name="2048"
+                blurb="Slide. Merge. Chase 2048."
+                tags={["Number", "Solo"]}
+                preview={<TwentyFortyEightPreview />}
+              />
+            </div>
           </section>
 
           {/* Coming soon */}
@@ -223,7 +231,7 @@ export default async function MeliosGamesHub() {
               <h2 className="font-display text-xs uppercase tracking-[0.18em] text-ink-faint">
                 Coming soon
               </h2>
-              <span className="text-xs text-ink-faint">3 in the works</span>
+              <span className="text-xs text-ink-faint">1 in the works</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <ComingSoonCard
@@ -231,18 +239,6 @@ export default async function MeliosGamesHub() {
                 blurb="Daily crosswords with friends."
                 tags={["Word", "Co-op"]}
                 preview={<CrosswordPreview />}
-              />
-              <ComingSoonCard
-                name="Connections"
-                blurb="Group sixteen words into four sets."
-                tags={["Word", "Solo"]}
-                preview={<ConnectionsPreview />}
-              />
-              <ComingSoonCard
-                name="Minesweeper"
-                blurb="Classic logic, modern feel."
-                tags={["Logic", "Solo"]}
-                preview={<MinesweeperPreview />}
               />
             </div>
           </section>
@@ -456,6 +452,47 @@ function SudokuPreview() {
  * Coming-soon game cards. Same outer shell as the Sudoku card but smaller,
  * dimmed, and not clickable. Each has its own preview tile.
  * =======================================================================*/
+
+function GameCard({
+  href,
+  name,
+  blurb,
+  tags,
+  preview,
+}: {
+  href: string;
+  name: string;
+  blurb: string;
+  tags: string[];
+  preview: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group relative flex flex-col gap-3 p-4 sm:p-5 rounded-2xl border border-edge bg-paper hover:border-edge-strong hover:shadow-[var(--shadow-soft)] hover:-translate-y-px transition-all duration-150"
+    >
+      <div className="flex items-center justify-center bg-paper-raised border border-edge rounded-xl py-5 px-3 min-h-[7.5rem]">
+        {preview}
+      </div>
+      <div className="flex flex-col gap-1">
+        <h3 className="font-display text-xl text-ink group-hover:text-brand transition-colors duration-75">
+          {name}
+        </h3>
+        <p className="text-sm text-ink-soft">{blurb}</p>
+        <ul className="flex flex-wrap gap-1.5 text-[10px] text-ink-faint mt-1">
+          {tags.map((t) => (
+            <li
+              key={t}
+              className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-paper-raised border border-edge"
+            >
+              {t}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Link>
+  );
+}
 
 function ComingSoonCard({
   name,
@@ -685,6 +722,36 @@ function TodayCard({
         {ctaLabel}
       </span>
     </Link>
+  );
+}
+
+function TwentyFortyEightPreview() {
+  // Mini 3x3 with characteristic 2048 colors + a 128 + 256 mid-merge moment.
+  const tiles = [
+    { v: 16, bg: "#f59563", fg: "#f9f6f2" },
+    { v: 32, bg: "#f67c5f", fg: "#f9f6f2" },
+    { v: 4, bg: "#ede0c8", fg: "#776e65" },
+    { v: 128, bg: "#edcf72", fg: "#f9f6f2" },
+    { v: 256, bg: "#edcc61", fg: "#f9f6f2" },
+    { v: 8, bg: "#f2b179", fg: "#f9f6f2" },
+    { v: 2, bg: "#eee4da", fg: "#776e65" },
+    { v: 4, bg: "#ede0c8", fg: "#776e65" },
+    { v: 64, bg: "#f65e3b", fg: "#f9f6f2" },
+  ];
+  return (
+    <div className="rounded-md bg-ink-faint p-1">
+      <div className="grid grid-cols-3 gap-1 w-24 sm:w-28">
+        {tiles.map((t, i) => (
+          <div
+            key={i}
+            className="aspect-square rounded-sm flex items-center justify-center font-display font-semibold tabular-nums text-[10px] sm:text-xs"
+            style={{ backgroundColor: t.bg, color: t.fg }}
+          >
+            {t.v}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
