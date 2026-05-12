@@ -265,6 +265,126 @@ export const PUZZLES: ConnectionsPuzzle[] = [
       },
     ],
   },
+  {
+    groups: [
+      {
+        theme: "Big cats",
+        difficulty: 0,
+        words: ["TIGER", "LION", "JAGUAR", "LEOPARD"],
+      },
+      {
+        theme: "Web browsers",
+        difficulty: 1,
+        words: ["CHROME", "FIREFOX", "SAFARI", "EDGE"],
+      },
+      {
+        theme: "Things that can be cracked",
+        difficulty: 2,
+        words: ["CODE", "EGG", "WHIP", "JOKE"],
+      },
+      {
+        theme: "___ House",
+        difficulty: 3,
+        words: ["WHITE", "BIRD", "BOAT", "GREEN"],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        theme: "Planets",
+        difficulty: 0,
+        words: ["MERCURY", "VENUS", "MARS", "SATURN"],
+      },
+      {
+        theme: "Roman gods",
+        difficulty: 1,
+        words: ["JUPITER", "NEPTUNE", "APOLLO", "PLUTO"],
+      },
+      {
+        theme: "Hot drinks",
+        difficulty: 2,
+        words: ["COCOA", "CIDER", "BROTH", "TODDY"],
+      },
+      {
+        theme: "Brass instruments",
+        difficulty: 3,
+        words: ["TROMBONE", "TUBA", "TRUMPET", "HORN"],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        theme: "Pizza toppings",
+        difficulty: 0,
+        words: ["PEPPERONI", "MUSHROOM", "OLIVE", "ONION"],
+      },
+      {
+        theme: "Forms of precipitation",
+        difficulty: 1,
+        words: ["RAIN", "SNOW", "HAIL", "SLEET"],
+      },
+      {
+        theme: "Boxing terms",
+        difficulty: 2,
+        words: ["JAB", "HOOK", "CROSS", "ROUND"],
+      },
+      {
+        theme: "Star Wars characters",
+        difficulty: 3,
+        words: ["YODA", "VADER", "LEIA", "REY"],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        theme: "Office supplies",
+        difficulty: 0,
+        words: ["STAPLER", "PEN", "TAPE", "RULER"],
+      },
+      {
+        theme: "Yoga or martial arts moves",
+        difficulty: 1,
+        words: ["LOTUS", "CRANE", "SCORPION", "DRAGON"],
+      },
+      {
+        theme: "Body parts (also verbs)",
+        difficulty: 2,
+        words: ["ELBOW", "FOOT", "HEEL", "EYE"],
+      },
+      {
+        theme: "Things on a beach",
+        difficulty: 3,
+        words: ["SAND", "SHELL", "WAVE", "CRAB"],
+      },
+    ],
+  },
+  {
+    groups: [
+      {
+        theme: "Programming languages",
+        difficulty: 0,
+        words: ["PYTHON", "RUBY", "RUST", "SWIFT"],
+      },
+      {
+        theme: "Snakes",
+        difficulty: 1,
+        words: ["COBRA", "VIPER", "MAMBA", "BOA"],
+      },
+      {
+        theme: "Sounds animals make",
+        difficulty: 2,
+        words: ["BARK", "ROAR", "PURR", "HOWL"],
+      },
+      {
+        theme: "___ Force",
+        difficulty: 3,
+        words: ["AIR", "TASK", "BRUTE", "STRIKE"],
+      },
+    ],
+  },
 ];
 
 /** UTC YYYY-MM-DD for today — same semantics as sudoku + wordle daily. */

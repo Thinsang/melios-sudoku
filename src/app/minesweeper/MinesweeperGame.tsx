@@ -24,12 +24,23 @@ const VALID_DIFFICULTIES: Difficulty[] = [
 ];
 
 const BEST_KEY = "melio_minesweeper_best_v1";
+const STATS_KEY = "melio_minesweeper_stats_v1";
 
 interface BestTimes {
   beginner?: number;
   intermediate?: number;
   expert?: number;
 }
+
+interface PlayStats {
+  played: Record<Difficulty, number>;
+  wins: Record<Difficulty, number>;
+}
+
+const EMPTY_STATS: PlayStats = {
+  played: { beginner: 0, intermediate: 0, expert: 0 },
+  wins: { beginner: 0, intermediate: 0, expert: 0 },
+};
 
 const NUMBER_COLORS: Record<number, string> = {
   1: "#1d4ed8", // blue
@@ -59,14 +70,24 @@ export function MinesweeperGame({
   const startMs = useRef<number | null>(null);
   const [best, setBest] = useState<BestTimes>({});
   const [justBestied, setJustBestied] = useState(false);
+  const [stats, setStats] = useState<PlayStats>(EMPTY_STATS);
+  const recordedRef = useRef(false);
 
-  // Hydrate bests from localStorage.
+  // Hydrate bests + lifetime stats from localStorage.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(BEST_KEY);
       if (raw) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setBest(JSON.parse(raw));
+      }
+    } catch {
+      // ignore
+    }
+    try {
+      const raw = window.localStorage.getItem(STATS_KEY);
+      if (raw) {
+        setStats({ ...EMPTY_STATS, ...JSON.parse(raw) });
       }
     } catch {
       // ignore
@@ -84,26 +105,45 @@ export function MinesweeperGame({
     return () => window.clearInterval(id);
   }, [board.status]);
 
-  // Save personal best when the user wins. Reacting to a status flip is
-  // exactly the kind of "state derived from external system change" the
-  // effect rule allows for; the lint heuristic doesn't detect this case
-  // so we silence it explicitly.
+  // On win OR loss, record the game in lifetime stats (once per game,
+  // guarded by recordedRef so re-renders don't double-count). On win,
+  // also update the personal best when the time is better.
   useEffect(() => {
-    if (board.status !== "won") return;
+    if (board.status !== "won" && board.status !== "lost") return;
+    if (recordedRef.current) return;
+    recordedRef.current = true;
     const final = elapsed;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setBest((prev) => {
-      const cur = prev[difficulty];
-      if (cur !== undefined && final >= cur) return prev;
-      const nextBest: BestTimes = { ...prev, [difficulty]: final };
+    const won = board.status === "won";
+    setStats((prev) => {
+      const next: PlayStats = {
+        played: { ...prev.played, [difficulty]: prev.played[difficulty] + 1 },
+        wins: {
+          ...prev.wins,
+          [difficulty]: prev.wins[difficulty] + (won ? 1 : 0),
+        },
+      };
       try {
-        window.localStorage.setItem(BEST_KEY, JSON.stringify(nextBest));
+        window.localStorage.setItem(STATS_KEY, JSON.stringify(next));
       } catch {
         // ignore
       }
-      setJustBestied(true);
-      return nextBest;
+      return next;
     });
+    if (won) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBest((prev) => {
+        const cur = prev[difficulty];
+        if (cur !== undefined && final >= cur) return prev;
+        const nextBest: BestTimes = { ...prev, [difficulty]: final };
+        try {
+          window.localStorage.setItem(BEST_KEY, JSON.stringify(nextBest));
+        } catch {
+          // ignore
+        }
+        setJustBestied(true);
+        return nextBest;
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [board.status]);
 
@@ -142,6 +182,7 @@ export function MinesweeperGame({
     setJustBestied(false);
     startMs.current = null;
     setElapsed(0);
+    recordedRef.current = false;
   }
 
   const config = DIFFICULTIES[difficulty];
@@ -290,18 +331,31 @@ export function MinesweeperGame({
         </div>
       )}
 
-      {/* Best times */}
-      <div className="grid grid-cols-3 gap-2 w-full max-w-md text-center">
-        {VALID_DIFFICULTIES.map((d) => (
-          <div key={d} className="p-2 rounded-lg border border-edge bg-paper">
-            <div className="text-[9px] uppercase tracking-[0.12em] text-ink-faint font-medium">
-              {DIFFICULTY_LABEL[d]}
+      {/* Stats per difficulty: best time + games won/played */}
+      <div className="grid grid-cols-3 gap-2 w-full max-w-md">
+        {VALID_DIFFICULTIES.map((d) => {
+          const played = stats.played[d];
+          const wins = stats.wins[d];
+          const winPct = played > 0 ? Math.round((wins / played) * 100) : null;
+          return (
+            <div
+              key={d}
+              className="p-2 rounded-lg border border-edge bg-paper text-center"
+            >
+              <div className="text-[9px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+                {DIFFICULTY_LABEL[d]}
+              </div>
+              <div className="font-mono tabular-nums text-sm text-ink mt-0.5">
+                {best[d] !== undefined ? fmtClock(best[d]!) : "—"}
+              </div>
+              {played > 0 && (
+                <div className="text-[10px] text-ink-faint tabular-nums mt-0.5">
+                  {wins}/{played} · {winPct}%
+                </div>
+              )}
             </div>
-            <div className="font-mono tabular-nums text-sm text-ink mt-0.5">
-              {best[d] !== undefined ? fmtClock(best[d]!) : "—"}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

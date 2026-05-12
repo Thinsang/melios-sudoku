@@ -48,6 +48,13 @@ export function TwentyFortyEightGame() {
   const [reached2048, setReached2048] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const [gameOver, setGameOver] = useState(false);
+  // One-step undo snapshot. Set after every successful move; consumed
+  // (cleared) when undo is used or a new game starts. Single-step keeps
+  // the game honest — you can't fish for a 4-spawn.
+  const [previous, setPrevious] = useState<{
+    board: Board;
+    score: number;
+  } | null>(null);
 
   // Hydrate best score.
   useEffect(() => {
@@ -69,7 +76,11 @@ export function TwentyFortyEightGame() {
       const result = move(cur, dir);
       if (!result.changed) return cur;
       const next = spawn(result.board);
+      // Snapshot the state we're leaving so the user can undo this one
+      // move. Use the score-updater closure so we capture the pre-move
+      // score correctly.
       setScore((s) => {
+        setPrevious({ board: cur, score: s });
         const ns = s + result.gained;
         setBest((b) => {
           if (ns > b) {
@@ -91,6 +102,14 @@ export function TwentyFortyEightGame() {
       return next;
     });
   }, [gameOver, reached2048]);
+
+  function undo() {
+    if (!previous) return;
+    setBoard(previous.board);
+    setScore(previous.score);
+    setPrevious(null);
+    setGameOver(false);
+  }
 
   // Keyboard input — arrows + WASD.
   useEffect(() => {
@@ -152,6 +171,7 @@ export function TwentyFortyEightGame() {
     setReached2048(false);
     setContinuing(false);
     setGameOver(false);
+    setPrevious(null);
   }
 
   // After hitting 2048, give a one-time "You won!" overlay; the user
@@ -178,6 +198,16 @@ export function TwentyFortyEightGame() {
             {best.toLocaleString()}
           </div>
         </div>
+        <button
+          type="button"
+          onClick={undo}
+          disabled={!previous}
+          aria-label="Undo last move"
+          title="Undo last move (one step)"
+          className="px-3 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised disabled:opacity-40 disabled:cursor-not-allowed text-sm font-medium transition-colors duration-75"
+        >
+          ↶
+        </button>
         <button
           type="button"
           onClick={newGame}
