@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/lib/auth/actions";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { SiteFooter } from "@/components/SiteFooter";
 
 // Schema.org Organization + WebSite structured data. Helps Google understand
 // what the site is and surface sitelinks under search results.
@@ -104,11 +105,7 @@ export default async function MeliosGamesHub() {
         </div>
       </main>
 
-      <footer className="border-t border-edge">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 text-xs text-ink-faint">
-          © Melio Games
-        </div>
-      </footer>
+      <SiteFooter />
     </>
   );
 }
