@@ -3,6 +3,37 @@ import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { createClient } from "@/lib/supabase/server";
 import { JoinByCodeForm } from "./JoinByCodeForm";
 
+// Schema.org structured data for the sudoku app — declared as a VideoGame
+// (the closest match for a free, browser-playable game). Helps Google show
+// rich result cards and discover the game's properties.
+const SUDOKU_STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  name: "Melio Sudoku",
+  url: "https://meliogames.com/sudoku",
+  image: "https://meliogames.com/sudoku/opengraph-image",
+  description:
+    "Play sudoku online for free. Five difficulties from Easy to Extreme. Race a friend, solve together in co-op, or play solo. Live multiplayer, scoring, leaderboards.",
+  genre: ["Puzzle", "Logic", "Strategy"],
+  gamePlatform: ["Web browser"],
+  applicationCategory: "Game",
+  operatingSystem: "Any",
+  inLanguage: "en-US",
+  playMode: ["SinglePlayer", "MultiPlayer", "CoOp"],
+  numberOfPlayers: { "@type": "QuantitativeValue", minValue: 1, maxValue: 4 },
+  isAccessibleForFree: true,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "Melio Games",
+    url: "https://meliogames.com",
+  },
+};
+
 const DIFFICULTY_DESC: Record<Difficulty, string> = {
   easy: "A relaxing warm-up.",
   medium: "Balanced and steady.",
@@ -74,6 +105,12 @@ export default async function Home({
 
   return (
     <main className="flex flex-1 flex-col items-center px-5 sm:px-6 py-10 sm:py-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(SUDOKU_STRUCTURED_DATA),
+        }}
+      />
       <div className="w-full max-w-3xl flex flex-col gap-12">
         {showWelcome && (
           <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 flex items-center gap-3 -mb-4">

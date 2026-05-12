@@ -1,6 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabase/server";
+
+export const metadata: Metadata = {
+  title: "Leaderboard",
+  description:
+    "Sudoku leaderboard — best scores per difficulty. Easy, Medium, Hard, Expert, Extreme.",
+  alternates: { canonical: "/sudoku/leaderboard" },
+};
 import { getUser } from "@/lib/auth/server";
 import {
   DIFFICULTIES,

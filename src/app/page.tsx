@@ -3,6 +3,31 @@ import { signOut } from "@/lib/auth/actions";
 import { getCurrentProfile } from "@/lib/auth/server";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+// Schema.org Organization + WebSite structured data. Helps Google understand
+// what the site is and surface sitelinks under search results.
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://meliogames.com#org",
+      name: "Melio Games",
+      url: "https://meliogames.com",
+      logo: "https://meliogames.com/icon.svg",
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://meliogames.com#website",
+      url: "https://meliogames.com",
+      name: "Melio Games",
+      publisher: { "@id": "https://meliogames.com#org" },
+      description:
+        "Play free online puzzle games at Melio Games. Multiplayer sudoku with friends, races, co-op, and leaderboards.",
+      inLanguage: "en-US",
+    },
+  ],
+};
+
 /**
  * Melio's Games hub. The bare meliogames.com landing. Renders an auth-aware
  * top bar, a hero, a featured Sudoku card with a 9x9 preview, and a roster of
@@ -15,6 +40,10 @@ export default async function MeliosGamesHub() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }}
+      />
       <HubTopBar profile={profile} />
 
       <main className="flex-1 flex flex-col items-center px-5 sm:px-6 py-12 sm:py-20">

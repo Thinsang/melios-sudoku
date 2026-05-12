@@ -23,27 +23,61 @@ const fraunces = Fraunces({
   display: "swap",
 });
 
+// metadataBase makes every relative URL in metadata (OG images, canonical, etc.)
+// resolve to an absolute URL. Required for OG/Twitter cards to work.
+const SITE_URL = "https://meliogames.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "Melio's Games",
-    template: "%s · Melio's Games",
+    default: "Melio Games — Sudoku, Wordle, Crossword & more",
+    template: "%s · Melio Games",
   },
-  description: "A small collection of carefully made games.",
+  description:
+    "Play free online puzzle games at Melio Games. Multiplayer sudoku with friends, races, co-op, and leaderboards. More games coming.",
+  keywords: [
+    "sudoku online",
+    "multiplayer sudoku",
+    "play sudoku with friends",
+    "free sudoku",
+    "sudoku race",
+    "sudoku co-op",
+    "puzzle games",
+    "melio games",
+    "melio sudoku",
+  ],
+  applicationName: "Melio Games",
+  creator: "Melio",
+  publisher: "Melio Games",
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Melio's Games",
-    description: "A small collection of carefully made games.",
+    title: "Melio Games — Sudoku, Wordle, Crossword & more",
+    description:
+      "Play free online puzzle games. Multiplayer sudoku with friends, races, co-op, leaderboards.",
+    url: SITE_URL,
     type: "website",
-    siteName: "Melio's Games",
+    siteName: "Melio Games",
+    locale: "en_US",
   },
   twitter: {
-    card: "summary",
-    title: "Melio's Games",
-    description: "A small collection of carefully made games.",
+    card: "summary_large_image",
+    title: "Melio Games",
+    description:
+      "Free online puzzle games. Multiplayer sudoku with friends. More games coming.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  category: "games",
 };
 
 export const viewport: Viewport = {
