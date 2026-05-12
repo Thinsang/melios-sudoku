@@ -9,6 +9,7 @@ import {
   getUserStreak,
   todayKey,
 } from "@/lib/daily";
+import { FlameIcon } from "@/components/icons/FlameIcon";
 import { DailyGame } from "./DailyGame";
 
 export const metadata: Metadata = {
@@ -140,8 +141,8 @@ export default async function DailyPage({
         {me && streak && (
           <div className="rounded-xl border border-edge bg-paper p-4 flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-full bg-warning-soft text-warning flex items-center justify-center text-xl">
-                🔥
+              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+                <FlameIcon size={28} dim={!streak.completedToday && streak.current === 0} />
               </div>
               <div>
                 <div className="font-display text-2xl text-ink tabular-nums leading-tight">

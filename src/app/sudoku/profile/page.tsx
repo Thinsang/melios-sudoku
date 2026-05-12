@@ -9,6 +9,7 @@ import { getUserAchievements } from "@/lib/achievements";
 import { EmptyState } from "@/components/EmptyState";
 import { Avatar } from "@/components/Avatar";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
+import { FlameIcon } from "@/components/icons/FlameIcon";
 import { ProfileEndGameButton } from "./ProfileEndGameButton";
 
 function fmtTime(ms: number) {
@@ -490,13 +491,13 @@ function StreakCard({
       <div className="flex items-center gap-3">
         <div
           className={
-            "shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-lg " +
+            "shrink-0 w-10 h-10 rounded-full flex items-center justify-center ring-1 ring-edge/60 " +
             (completedToday
-              ? "bg-success/15 text-success"
-              : "bg-warning-soft text-warning")
+              ? "bg-success/15 text-success text-lg"
+              : "bg-gradient-to-br from-warning-soft to-paper-raised")
           }
         >
-          {completedToday ? "✓" : "🔥"}
+          {completedToday ? "✓" : <FlameIcon size={22} dim={current === 0} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">

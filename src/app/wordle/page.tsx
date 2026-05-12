@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUser } from "@/lib/auth/server";
 import { getUserWordleStreak } from "@/lib/wordle/actions";
 import { Avatar } from "@/components/Avatar";
+import { FlameIcon } from "@/components/icons/FlameIcon";
 import { WordleGame } from "./WordleGame";
 
 // Compute the daily word at request time, not at build time. Without this
@@ -83,8 +84,11 @@ export default async function WordlePage() {
         {streak && (
           <div className="rounded-xl border border-edge bg-paper p-4 flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-warning-soft text-warning flex items-center justify-center text-lg">
-                🔥
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+                <FlameIcon
+                  size={22}
+                  dim={!streak.completedToday && streak.current === 0}
+                />
               </div>
               <div>
                 <div className="font-display text-xl text-ink tabular-nums leading-tight">

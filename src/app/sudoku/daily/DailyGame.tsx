@@ -17,6 +17,7 @@ import { SudokuBoard } from "@/components/sudoku/SudokuBoard";
 import { NumberPad } from "@/components/sudoku/NumberPad";
 import { BoardDecoration } from "@/components/sudoku/BoardDecoration";
 import { ShareButton } from "@/components/ShareButton";
+import { FlameIcon } from "@/components/icons/FlameIcon";
 
 function fmtTime(ms: number) {
   const s = Math.floor(ms / 1000);
@@ -365,8 +366,8 @@ function ActiveDaily({
       {game.complete && (
         <div className="fixed inset-0 flex items-center justify-center bg-ink/40 backdrop-blur-sm z-50 p-4">
           <div className="bg-paper border border-edge rounded-2xl p-7 sm:p-8 max-w-md w-full text-center shadow-[var(--shadow-lifted)]">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-warning-soft text-warning flex items-center justify-center text-xl">
-              🔥
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+              <FlameIcon size={28} />
             </div>
             <h2 className="font-display text-2xl text-ink mb-1">
               Daily done!

@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Wordle favicon. Three Wordle-colored tiles in a row — green for
-       correct, yellow for present, gray for absent. Instantly Wordle. -->
-  <rect width="32" height="32" rx="6" fill="#faf6ee"/>
-  <rect x="3" y="11" width="8" height="10" rx="1" fill="#6aaa64"/>
-  <rect x="12" y="11" width="8" height="10" rx="1" fill="#c9b458"/>
-  <rect x="21" y="11" width="8" height="10" rx="1" fill="#787c7e"/>
+  <!-- Wordle favicon. Three Wordle-colored tiles on transparent so the
+       icon sits naturally on any browser chrome. Tiles get a thin matching
+       stroke so even the yellow doesn't disappear on cream tab backgrounds. -->
+  <rect x="3" y="11" width="8" height="10" rx="1" fill="#6aaa64" stroke="#558b50" stroke-width="0.5"/>
+  <rect x="12" y="11" width="8" height="10" rx="1" fill="#c9b458" stroke="#a89844" stroke-width="0.5"/>
+  <rect x="21" y="11" width="8" height="10" rx="1" fill="#787c7e" stroke="#5a5d5f" stroke-width="0.5"/>
 </svg>

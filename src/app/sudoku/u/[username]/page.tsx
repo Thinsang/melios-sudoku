@@ -8,6 +8,7 @@ import { getUserStreak } from "@/lib/daily";
 import { getUserWordleStreak } from "@/lib/wordle/actions";
 import { getUserAchievements } from "@/lib/achievements";
 import { AchievementsGrid } from "@/components/AchievementsGrid";
+import { FlameIcon } from "@/components/icons/FlameIcon";
 import { ChallengeButton } from "./ChallengeButton";
 
 function fmtTime(ms: number) {
@@ -185,8 +186,8 @@ export default async function PublicProfilePage({
         {(sudokuStreak.longest > 0 || wordleStreak.longest > 0) && (
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="rounded-xl border border-edge bg-paper p-4 flex items-center gap-3">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-warning-soft text-warning flex items-center justify-center text-lg">
-                🔥
+              <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+                <FlameIcon size={22} />
               </div>
               <div>
                 <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">
@@ -201,8 +202,8 @@ export default async function PublicProfilePage({
               </div>
             </div>
             <div className="rounded-xl border border-edge bg-paper p-4 flex items-center gap-3">
-              <div className="shrink-0 w-10 h-10 rounded-full bg-warning-soft text-warning flex items-center justify-center text-lg">
-                🔥
+              <div className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+                <FlameIcon size={22} />
               </div>
               <div>
                 <div className="text-[10px] uppercase tracking-[0.12em] text-ink-faint font-medium">

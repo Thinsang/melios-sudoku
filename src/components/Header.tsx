@@ -7,6 +7,7 @@ import { HeaderRealtimeWatcher } from "./HeaderRealtimeWatcher";
 import { ThemeToggle } from "./ThemeToggle";
 import { BrandMark } from "./BrandMark";
 import { Avatar } from "./Avatar";
+import { FlameIcon } from "./icons/FlameIcon";
 
 export async function Header() {
   const profile = await getCurrentProfile();
@@ -77,7 +78,7 @@ export async function Header() {
                       : `${streakCurrent}-day streak — solve today to keep it`
                   }
                 >
-                  <span aria-hidden>🔥</span>
+                  <FlameIcon size={14} dim={!streakCompletedToday} />
                   <span className="tabular-nums">{streakCurrent}</span>
                 </Link>
               )}

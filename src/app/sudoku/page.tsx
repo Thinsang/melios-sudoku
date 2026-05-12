@@ -8,6 +8,9 @@ import {
   todayKey,
 } from "@/lib/daily";
 import { FirstTimeTutorial } from "@/components/sudoku/FirstTimeTutorial";
+import { FlameIcon } from "@/components/icons/FlameIcon";
+import { BoltIcon } from "@/components/icons/BoltIcon";
+import { PairIcon } from "@/components/icons/PairIcon";
 import { JoinByCodeForm } from "./JoinByCodeForm";
 
 // Schema.org structured data for the sudoku app — declared as a VideoGame
@@ -224,8 +227,8 @@ export default async function Home({
           className="group block rounded-2xl border border-brand/40 bg-gradient-to-br from-brand-soft via-paper to-paper p-5 sm:p-6 hover:border-brand hover:shadow-[var(--shadow-lifted)] transition-all duration-150"
         >
           <div className="flex items-center gap-5">
-            <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-warning-soft text-warning flex items-center justify-center text-2xl sm:text-3xl">
-              🔥
+            <div className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-warning-soft to-paper-raised ring-1 ring-edge/60 flex items-center justify-center">
+              <FlameIcon size={32} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -316,15 +319,17 @@ export default async function Home({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <ModeCard
               href="/sudoku/new-game?mode=race"
-              icon={<RaceIcon />}
+              icon={<BoltIcon size={24} />}
               title="Race a friend"
               description="Same puzzle, separate boards, fastest wins."
+              accent="amber"
             />
             <ModeCard
               href="/sudoku/new-game?mode=coop"
-              icon={<CoopIcon />}
+              icon={<PairIcon size={26} />}
               title="Co-op with a friend"
               description="Solve a single board together."
+              accent="brand"
             />
           </div>
           <div className="mt-3">
@@ -397,18 +402,33 @@ function ModeCard({
   icon,
   title,
   description,
+  accent = "brand",
 }: {
   href: string;
   icon: React.ReactNode;
   title: string;
   description: string;
+  /** Tints the icon container so race + coop don't look identical. */
+  accent?: "brand" | "amber";
 }) {
+  // Each accent uses a soft gradient instead of flat brand-soft so the
+  // container feels more crafted (and Race vs Co-op aren't visually
+  // identical in a row).
+  const containerTone =
+    accent === "amber"
+      ? "bg-gradient-to-br from-warning-soft to-paper-raised"
+      : "bg-gradient-to-br from-brand-soft to-paper-raised";
   return (
     <Link
       href={href}
       className="group flex items-start gap-4 rounded-xl border border-edge bg-paper p-5 hover:border-edge-strong hover:shadow-[var(--shadow-soft)] hover:-translate-y-px transition-all duration-150"
     >
-      <div className="shrink-0 w-10 h-10 rounded-lg bg-brand-soft text-brand flex items-center justify-center">
+      <div
+        className={
+          "shrink-0 w-12 h-12 rounded-xl flex items-center justify-center ring-1 ring-edge/60 " +
+          containerTone
+        }
+      >
         {icon}
       </div>
       <div>
@@ -439,21 +459,3 @@ function ArrowIcon({ className }: { className?: string }) {
   );
 }
 
-function RaceIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
-    </svg>
-  );
-}
-
-function CoopIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-      <circle cx="8.5" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M17 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}

@@ -1,17 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Sudoku favicon. Traditional ink-on-paper feel: cream square with a
-       black 3x3 grid, with the center cell filled in brand purple so it
-       stays distinctive at favicon sizes. -->
-  <rect width="32" height="32" rx="6" fill="#faf6ee"/>
+  <!-- Sudoku favicon. 3x3 grid + one accented cell, all in brand purple
+       on transparent so it sits naturally on any browser chrome. The
+       saturated purple stays readable on both light and dark tab backgrounds. -->
   <!-- Center cell accent -->
   <rect x="14.5" y="14.5" width="3" height="3" fill="#6d28d9"/>
   <!-- Outer grid border -->
   <rect
     x="6" y="6" width="20" height="20"
-    fill="none" stroke="#1c1916" stroke-width="2.5" stroke-linejoin="round"
+    fill="none" stroke="#6d28d9" stroke-width="2.5" stroke-linejoin="round"
   />
   <!-- Inner 3x3 division lines -->
-  <g stroke="#1c1916" stroke-width="2" stroke-linecap="round">
+  <g stroke="#6d28d9" stroke-width="2" stroke-linecap="round">
     <line x1="12.66" y1="6" x2="12.66" y2="26"/>
     <line x1="19.33" y1="6" x2="19.33" y2="26"/>
     <line x1="6" y1="12.66" x2="26" y2="12.66"/>
