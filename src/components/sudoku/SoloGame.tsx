@@ -216,7 +216,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
         </div>
       </div>
 
-      <div className="relative">
+      <div className="relative isolate">
         <BoardDecoration theme={boardTheme} />
         <SudokuBoard
           given={game.state.given}
@@ -231,7 +231,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
           <button
             type="button"
             onClick={game.start}
-            className="absolute inset-0 flex items-center justify-center bg-canvas/90 backdrop-blur-sm rounded-xl cursor-pointer group focus:outline-none"
+            className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/90 backdrop-blur-sm rounded-xl cursor-pointer group focus:outline-none"
             aria-label="Begin puzzle"
           >
             <div className="text-center px-6 max-w-xs">
@@ -255,7 +255,7 @@ function GameInner({ puzzle, onNewGame }: { puzzle: Puzzle; onNewGame: () => voi
           </button>
         )}
         {game.state.paused && !notStarted && (
-          <div className="absolute inset-0 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
             <div className="text-center">
               <div className="font-display text-2xl text-ink mb-3">Paused</div>
               <button

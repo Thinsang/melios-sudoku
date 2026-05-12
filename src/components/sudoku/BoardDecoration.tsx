@@ -27,8 +27,13 @@ export function BoardDecoration({ theme }: { theme: BoardThemeId }) {
   }
 }
 
+// Important: we render the decoration BEFORE the board in DOM order, and the
+// board's wrapper is `relative z-10` so it sits above. The decoration is
+// `absolute z-0` here (not negative) — a negative z-index can push the
+// element behind ancestor backgrounds entirely when the nearest positioned
+// ancestor doesn't create a stacking context.
 const FRAME_CLS =
-  "pointer-events-none absolute -inset-3 sm:-inset-6 lg:-inset-10 -z-10 overflow-visible";
+  "pointer-events-none absolute -inset-3 sm:-inset-6 lg:-inset-10 z-0 overflow-visible";
 
 /* =========================================================================
  * Sakura — cherry blossom branches anchored at top-right and bottom-left,

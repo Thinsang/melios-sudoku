@@ -39,7 +39,7 @@ export function SudokuBoard({
   return (
     <div
       data-board-theme={theme}
-      className="grid grid-cols-9 grid-rows-9 aspect-square w-full select-none touch-manipulation rounded-xl overflow-hidden border-2 border-ink bg-paper shadow-[var(--shadow-soft)]"
+      className="relative z-10 grid grid-cols-9 grid-rows-9 aspect-square w-full select-none touch-manipulation rounded-xl overflow-hidden border-2 border-ink bg-paper shadow-[var(--shadow-soft)]"
       role="grid"
       aria-label="Sudoku board"
     >

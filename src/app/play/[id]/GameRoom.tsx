@@ -749,7 +749,7 @@ export function GameRoom({
             </button>
           </div>
 
-          <div className="relative">
+          <div className="relative isolate">
             <BoardDecoration theme={boardTheme} />
             <SudokuBoard
               given={given}
@@ -763,7 +763,7 @@ export function GameRoom({
             />
 
             {/* Race lobby — shown until all players are ready and the
-                 countdown is triggered. */}
+                 countdown is triggered. Sits above the board + decoration. */}
             {isWaiting && (
               <RaceLobby
                 me={me}
@@ -779,7 +779,7 @@ export function GameRoom({
             {/* 3-2-1 countdown — shown once startMs is set but still in the
                  future. The big number is derived from countdownSec. */}
             {isCountingDown && (
-              <div className="absolute inset-0 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl">
                 <div className="text-center">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium mb-2">
                     Get ready
@@ -792,7 +792,7 @@ export function GameRoom({
             )}
 
             {paused && isLive && (
-              <div className="absolute inset-0 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/85 backdrop-blur-sm rounded-xl">
                 <div className="text-center">
                   <div className="font-display text-2xl text-ink mb-3">Paused</div>
                   <button
@@ -1110,7 +1110,7 @@ function RaceLobby({
   const readyCount = players.filter((p) => readySet.has(p.id)).length;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl p-4">
+    <div className="absolute inset-0 z-20 flex items-center justify-center bg-canvas/95 backdrop-blur-sm rounded-xl p-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-5">
           <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium">
