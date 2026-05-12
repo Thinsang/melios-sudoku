@@ -63,7 +63,7 @@ export default async function ProfilePage() {
       <div className="w-full max-w-2xl flex flex-col gap-10">
         <div>
           <Link
-            href="/"
+            href="/sudoku"
             className="text-sm text-ink-soft hover:text-ink transition-colors duration-75"
           >
             ← Home

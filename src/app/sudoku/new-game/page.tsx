@@ -37,7 +37,7 @@ export default async function NewGamePage({
       <div className="w-full max-w-md flex flex-col gap-6">
         <div>
           <Link
-            href="/"
+            href="/sudoku"
             className="text-sm text-ink-soft hover:text-ink transition-colors duration-75"
           >
             ← Home

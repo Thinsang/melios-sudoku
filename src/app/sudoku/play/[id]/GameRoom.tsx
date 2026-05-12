@@ -678,10 +678,10 @@ export function GameRoom({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3 text-sm">
           <Link
-            href="/"
+            href="/sudoku"
             className="text-ink-soft hover:text-ink transition-colors duration-75"
           >
-            ← Home
+            ← Sudoku
           </Link>
           <span className="text-ink-faint">·</span>
           <span className="font-display text-base text-ink">
@@ -919,10 +919,10 @@ export function GameRoom({
                 New game
               </Link>
               <Link
-                href="/"
+                href="/sudoku"
                 className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
               >
-                Home
+                Sudoku home
               </Link>
             </div>
           </div>
@@ -966,10 +966,10 @@ export function GameRoom({
                 Leaderboard
               </Link>
               <Link
-                href="/"
+                href="/sudoku"
                 className="px-5 py-2.5 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
               >
-                Home
+                Sudoku home
               </Link>
             </div>
           </div>

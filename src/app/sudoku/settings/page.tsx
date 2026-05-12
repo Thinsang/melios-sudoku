@@ -20,10 +20,10 @@ export default async function SettingsPage() {
       <div className="w-full max-w-md flex flex-col gap-10">
         <div>
           <Link
-            href="/sudoku/profile"
+            href="/sudoku"
             className="text-sm text-ink-soft hover:text-ink transition-colors duration-75"
           >
-            ← Profile
+            ← Sudoku
           </Link>
           <h1 className="font-display text-4xl text-ink mt-3">Settings</h1>
         </div>

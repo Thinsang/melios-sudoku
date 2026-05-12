@@ -124,7 +124,7 @@ export default async function LeaderboardPage({
       <div className="w-full max-w-3xl flex flex-col gap-8">
         <div>
           <Link
-            href="/"
+            href="/sudoku"
             className="text-sm text-ink-soft hover:text-ink transition-colors duration-75"
           >
             ← Home
