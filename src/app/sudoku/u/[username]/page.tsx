@@ -6,6 +6,8 @@ import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { Avatar } from "@/components/Avatar";
 import { getUserStreak } from "@/lib/daily";
 import { getUserWordleStreak } from "@/lib/wordle/actions";
+import { getUserAchievements } from "@/lib/achievements";
+import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { ChallengeButton } from "./ChallengeButton";
 
 function fmtTime(ms: number) {
@@ -130,6 +132,10 @@ export default async function PublicProfilePage({
   const wordlePlayed = wordleRows?.length ?? 0;
   const wordleWins = (wordleRows ?? []).filter((r) => r.won).length;
 
+  // Achievements
+  const achievements = await getUserAchievements(profile.id);
+  const anyUnlocked = achievements.some((a) => a.unlocked);
+
   return (
     <main className="flex flex-1 justify-center px-5 sm:px-6 py-10">
       <div className="w-full max-w-2xl flex flex-col gap-10">
@@ -243,6 +249,15 @@ export default async function PublicProfilePage({
             ))}
           </div>
         </section>
+
+        {anyUnlocked && (
+          <section>
+            <h2 className="font-display text-lg text-ink mb-3.5">
+              Achievements
+            </h2>
+            <AchievementsGrid progress={achievements} />
+          </section>
+        )}
 
         <section className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-ink-faint">
           <span>

@@ -5,8 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { DIFFICULTIES, DIFFICULTY_LABEL, Difficulty } from "@/lib/sudoku";
 import { getUserStreak } from "@/lib/daily";
 import { getUserWordleStreak } from "@/lib/wordle/actions";
+import { getUserAchievements } from "@/lib/achievements";
 import { EmptyState } from "@/components/EmptyState";
 import { Avatar } from "@/components/Avatar";
+import { AchievementsGrid } from "@/components/AchievementsGrid";
 import { ProfileEndGameButton } from "./ProfileEndGameButton";
 
 function fmtTime(ms: number) {
@@ -26,6 +28,7 @@ export default async function ProfilePage() {
 
   const streak = await getUserStreak(profile.id);
   const wordleStreak = await getUserWordleStreak(profile.id);
+  const achievements = await getUserAchievements(profile.id);
 
   // Best daily score across all completions.
   const { data: dailyRows } = await supabase
@@ -241,6 +244,10 @@ export default async function ProfilePage() {
             </div>
           </Section>
         )}
+
+        <Section title="Achievements">
+          <AchievementsGrid progress={achievements} />
+        </Section>
 
         <Section title="Recent games">
           {recent.length === 0 ? (
