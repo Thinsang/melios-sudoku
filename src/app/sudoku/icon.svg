@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="none">
+  <!-- Purple 3x3 sudoku grid mark for the /sudoku/* section.
+       Same pattern as the in-app BrandMark for visual continuity. -->
+  <g fill="#6d28d9">
+    <rect x="0" y="0" width="3.4" height="3.4" rx="0.6"/>
+    <rect x="4.25" y="0" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
+    <rect x="8.5" y="0" width="3.4" height="3.4" rx="0.6" opacity="0.4"/>
+    <rect x="0" y="4.25" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
+    <rect x="4.25" y="4.25" width="3.4" height="3.4" rx="0.6"/>
+    <rect x="8.5" y="4.25" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
+    <rect x="0" y="8.5" width="3.4" height="3.4" rx="0.6" opacity="0.4"/>
+    <rect x="4.25" y="8.5" width="3.4" height="3.4" rx="0.6" opacity="0.15"/>
+    <rect x="8.5" y="8.5" width="3.4" height="3.4" rx="0.6"/>
+  </g>
+</svg>
