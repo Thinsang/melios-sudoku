@@ -26,6 +26,7 @@ interface Persisted {
 const STORAGE_PREFIX = "melio_wordle_";
 const STATS_KEY = "melio_wordle_stats_v1";
 const HARD_MODE_KEY = "melio_wordle_hard_v1";
+const COLORBLIND_KEY = "melio_wordle_cb_v1";
 
 interface Stats {
   played: number;
@@ -66,6 +67,9 @@ export function WordleGame({
   // Hard mode: revealed clues must be reused in every subsequent guess.
   // Locked once the user submits a guess — can't be toggled mid-game.
   const [hardMode, setHardMode] = useState(false);
+  // High-contrast / colorblind palette (orange + blue instead of green +
+  // yellow). Can be toggled at any time.
+  const [colorblind, setColorblind] = useState(false);
 
   // Load persisted state on mount. localStorage isn't available during
   // SSR so we must read it post-mount — the "no setState in effect" rule
@@ -94,6 +98,7 @@ export function WordleGame({
     }
     try {
       setHardMode(window.localStorage.getItem(HARD_MODE_KEY) === "1");
+      setColorblind(window.localStorage.getItem(COLORBLIND_KEY) === "1");
     } catch {
       // ignore
     }
@@ -309,8 +314,8 @@ export function WordleGame({
         <Stat label="Best" value={stats.bestStreak} />
       </div>
 
-      {/* Hard mode toggle */}
-      <div className="flex items-center justify-between gap-3 text-xs">
+      {/* Mode toggles */}
+      <div className="flex items-center justify-between gap-3 text-xs flex-wrap">
         <div className="text-ink-faint">
           {hardMode ? (
             <span className="text-warning font-medium">Hard mode on</span>
@@ -323,33 +328,51 @@ export function WordleGame({
             </span>
           )}
         </div>
-        <button
-          type="button"
-          onClick={toggleHardMode}
-          aria-pressed={hardMode}
-          className={
-            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
-            (hardMode
-              ? "border-warning bg-warning-soft text-warning"
-              : "border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised") +
-            (hardModeLocked ? " opacity-60 cursor-not-allowed" : "")
-          }
-        >
-          <span
+        <div className="flex items-center gap-1.5">
+          <ToggleChip
+            label="High contrast"
+            on={colorblind}
+            onClick={() => {
+              const next = !colorblind;
+              setColorblind(next);
+              try {
+                window.localStorage.setItem(
+                  COLORBLIND_KEY,
+                  next ? "1" : "0",
+                );
+              } catch {
+                // ignore
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={toggleHardMode}
+            aria-pressed={hardMode}
             className={
-              "w-7 h-3.5 rounded-full relative transition-colors duration-150 " +
-              (hardMode ? "bg-warning" : "bg-edge-strong")
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
+              (hardMode
+                ? "border-warning bg-warning-soft text-warning"
+                : "border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised") +
+              (hardModeLocked ? " opacity-60 cursor-not-allowed" : "")
             }
           >
             <span
               className={
-                "absolute top-0.5 w-2.5 h-2.5 rounded-full bg-paper transition-transform duration-150 " +
-                (hardMode ? "left-3.5" : "left-0.5")
+                "w-7 h-3.5 rounded-full relative transition-colors duration-150 " +
+                (hardMode ? "bg-warning" : "bg-edge-strong")
               }
-            />
-          </span>
-          Hard
-        </button>
+            >
+              <span
+                className={
+                  "absolute top-0.5 w-2.5 h-2.5 rounded-full bg-paper transition-transform duration-150 " +
+                  (hardMode ? "left-3.5" : "left-0.5")
+                }
+              />
+            </span>
+            Hard
+          </button>
+        </div>
       </div>
 
       {/* Grid */}
@@ -366,6 +389,7 @@ export function WordleGame({
                 letter={cell.letter}
                 state={cell.state}
                 animateDelayMs={row.isCurrent ? 0 : ci * 80}
+                colorblind={colorblind}
               />
             ))}
           </div>
@@ -394,6 +418,7 @@ export function WordleGame({
         onBackspace={() => setCurrent((c) => c.slice(0, -1))}
         onEnter={submitGuess}
         disabled={done}
+        colorblind={colorblind}
       />
     </div>
   );
@@ -477,6 +502,45 @@ function GameOverCard({
   );
 }
 
+function ToggleChip({
+  label,
+  on,
+  onClick,
+}: {
+  label: string;
+  on: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className={
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors duration-75 " +
+        (on
+          ? "border-brand bg-brand-soft text-brand"
+          : "border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised")
+      }
+    >
+      <span
+        className={
+          "w-7 h-3.5 rounded-full relative transition-colors duration-150 " +
+          (on ? "bg-brand" : "bg-edge-strong")
+        }
+      >
+        <span
+          className={
+            "absolute top-0.5 w-2.5 h-2.5 rounded-full bg-paper transition-transform duration-150 " +
+            (on ? "left-3.5" : "left-0.5")
+          }
+        />
+      </span>
+      {label}
+    </button>
+  );
+}
+
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div className="p-2 rounded-lg border border-edge bg-paper text-center">
@@ -492,16 +556,27 @@ function Tile({
   letter,
   state,
   animateDelayMs,
+  colorblind,
 }: {
   letter: string;
   state: LetterState | "empty" | "typing";
   animateDelayMs: number;
+  colorblind?: boolean;
 }) {
+  // Colorblind palette swaps green/yellow for orange/blue — same pairing
+  // NYT Wordle uses for its accessibility mode. Higher contrast against
+  // both light and dark page backgrounds.
+  const correctClass = colorblind
+    ? "bg-[#f5793a] text-white border-[#f5793a]"
+    : "bg-success text-canvas border-success";
+  const presentClass = colorblind
+    ? "bg-[#85c0f9] text-[#0a1325] border-[#85c0f9]"
+    : "bg-warning text-canvas border-warning";
   const tone =
     state === "correct"
-      ? "bg-success text-canvas border-success"
+      ? correctClass
       : state === "present"
-        ? "bg-warning text-canvas border-warning"
+        ? presentClass
         : state === "absent"
           ? "bg-paper-raised text-ink-faint border-edge-strong"
           : state === "typing"
@@ -542,12 +617,14 @@ function Keyboard({
   onBackspace,
   onEnter,
   disabled,
+  colorblind,
 }: {
   states: Record<string, LetterState>;
   onLetter: (l: string) => void;
   onBackspace: () => void;
   onEnter: () => void;
   disabled: boolean;
+  colorblind?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5 select-none" aria-hidden={disabled}>
@@ -583,6 +660,7 @@ function Keyboard({
                 state={states[k]}
                 onClick={() => onLetter(k)}
                 disabled={disabled}
+                colorblind={colorblind}
               />
             );
           })}
@@ -598,18 +676,26 @@ function Key({
   wide,
   onClick,
   disabled,
+  colorblind,
 }: {
   label: string;
   state?: LetterState;
   wide?: boolean;
   onClick: () => void;
   disabled?: boolean;
+  colorblind?: boolean;
 }) {
+  const correctClass = colorblind
+    ? "bg-[#f5793a] text-white"
+    : "bg-success text-canvas";
+  const presentClass = colorblind
+    ? "bg-[#85c0f9] text-[#0a1325]"
+    : "bg-warning text-canvas";
   const tone =
     state === "correct"
-      ? "bg-success text-canvas"
+      ? correctClass
       : state === "present"
-        ? "bg-warning text-canvas"
+        ? presentClass
         : state === "absent"
           ? "bg-paper-raised text-ink-faint"
           : "bg-paper text-ink border border-edge";
