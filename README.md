@@ -96,8 +96,7 @@ what name to pick so the filter doesn't immediately re-block your mirror.
 
 - **Client-side puzzle generation** for solo (`src/lib/sudoku/engine.ts`). The generator builds a fully solved board, then removes cells while verifying the puzzle still has exactly one solution.
 - **Reducer-based game state** (`src/lib/sudoku/useSudokuGame.ts`) with notes, undo history, conflict detection, mistake counting, and a tick timer.
-- **Server-side Supabase client** (`src/lib/supabase/server.ts`) for RSC and route handlers; **browser client** (`src/lib/supabase/client.ts`) for use inside `'use client'` components.
-- **Proxy** (`src/proxy.ts`) keeps the session cookie warm on every navigation. (Next.js 16 renamed `middleware.ts` to `proxy.ts`.)
+- **Server-side Supabase client** (`src/lib/supabase/server.ts`) for RSC and route handlers; **browser client** (`src/lib/supabase/client.ts`) for use inside `'use client'` components. The server client refreshes the auth cookie on every call to `supabase.auth.getUser()`, which is what every authed page does anyway — so we don't ship a separate `proxy.ts` (Next 16's proxy is locked to Node.js runtime, which can't deploy to Cloudflare Workers via OpenNext).
 - **RLS** (`supabase/schema.sql`) enforces participant-only access to game state. Anonymous game reads are allowed so guest invite links work; writes require either the authed user or a `guest_id` matching the player row.
 
 ## Multiplayer design
@@ -163,7 +162,6 @@ src/
     supabase/
       client.ts
       server.ts
-      proxy.ts
       types.ts
     auth/
       actions.ts              # signIn / signUp / signOut
@@ -173,7 +171,6 @@ src/
     friends/
       actions.ts              # send/accept/decline friend request, accept/decline game invite, unfriend
     guest.ts                  # ms_guest_id + ms_guest_name cookies
-  proxy.ts
 supabase/
   schema.sql                  # source of truth for the public schema
 ```

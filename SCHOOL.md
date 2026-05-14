@@ -53,6 +53,10 @@ The Supabase project needs to know about the new origin or auth will fail.
 
 Now the same app is reachable at the new URL, leaderboard and friends shared with your main site.
 
+### About the Cloudflare build
+
+Cloudflare Pages auto-detects Next.js and uses the [OpenNext](https://opennext.js.org/cloudflare) adapter to compile the app for Cloudflare Workers. OpenNext doesn't support Next.js Node.js-runtime middleware (Next 16 calls it `proxy.ts`), so this repo deliberately doesn't ship one — Supabase session refresh happens lazily inside `getUser()` on every authed page instead. You may see warnings about `nodejs_compat` flags or KV cache during the build; those are safe to ignore.
+
 ---
 
 ## Option 2 — Vercel second project, fresh subdomain
