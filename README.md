@@ -82,10 +82,15 @@ What "unblocked games" sites actually do is one of:
 1. **Iframe from a Google Site** (different product) pointing at the
    real game host. The iframe support above makes this work.
 2. **Mirror to a fresh subdomain** schools haven't blocked yet (a
-   Vercel preview URL, `*.pages.dev`, `*.netlify.app`, etc.).
+   Cloudflare Pages `*.pages.dev` URL, `*.vercel.app`, `*.netlify.app`).
 3. **Pick an innocuous domain name** that doesn't read as "games".
 
-Option 1 is the easiest — drop the iframe above into any Google Site.
+If `meliogames.com` itself is blocked at your school, the iframe trick
+**won't** help — the browser still has to fetch the iframe content from
+the blocked origin. You need a mirror on a different domain. See
+[SCHOOL.md](SCHOOL.md) for step-by-step instructions covering Cloudflare
+Pages, a second Vercel project, and Google Sites portals — including
+what name to pick so the filter doesn't immediately re-block your mirror.
 
 ## Architecture sketch
 
