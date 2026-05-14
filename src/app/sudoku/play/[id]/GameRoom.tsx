@@ -90,6 +90,10 @@ export function GameRoom({
   const [mistakes, setMistakes] = useState<number>(me.mistakes ?? 0);
   const [elapsed, setElapsed] = useState(0);
   const [copied, setCopied] = useState(false);
+  // Race-only: user-dismissible results modal. Defaults false (modal shown
+  // once the race is over) and flips to true when the user closes it so
+  // they can spectate without a popover in the way.
+  const [resultsDismissed, setResultsDismissed] = useState(false);
 
   // Race-only: lobby state. `raceReady` is the live broadcast view; once all
   // joined players are ready, any client calls startRace() which sets
@@ -797,7 +801,7 @@ export function GameRoom({
           winnerName={winner?.display_name ?? null}
           winnerTime={winner?.finish_time_ms ?? null}
           allFinished={allFinished}
-          difficulty={game.difficulty as Difficulty}
+          onShowResults={() => setResultsDismissed(false)}
         />
       )}
 
@@ -1055,6 +1059,22 @@ export function GameRoom({
           </div>
         </div>
       )}
+
+      {/* Race match-results modal — shown when the user has finished the
+          race (or the race ended otherwise). Replaces the previous "go to
+          the global leaderboard" CTA with the actual standings for THIS
+          match: rank, name, time, mistakes, and computed score per player. */}
+      {isRace && complete && !resultsDismissed && (
+        <RaceResultsModal
+          players={players}
+          meId={me.id}
+          difficulty={game.difficulty as Difficulty}
+          myElapsedMs={elapsed}
+          myMistakes={mistakes}
+          allFinished={allFinished}
+          onClose={() => setResultsDismissed(true)}
+        />
+      )}
     </div>
   );
 }
@@ -1071,7 +1091,7 @@ function RaceFinishBanner({
   winnerName,
   winnerTime,
   allFinished,
-  difficulty,
+  onShowResults,
 }: {
   iWon: boolean;
   myComplete: boolean;
@@ -1080,7 +1100,7 @@ function RaceFinishBanner({
   winnerName: string | null;
   winnerTime: number | null;
   allFinished: boolean;
-  difficulty: Difficulty;
+  onShowResults: () => void;
 }) {
   // Three states:
   //  - I won (or am the only one done so far)
@@ -1139,12 +1159,13 @@ function RaceFinishBanner({
         )}
       </div>
       <div className="shrink-0 flex flex-col gap-1.5">
-        <Link
-          href={`/sudoku/leaderboard?d=${difficulty}`}
+        <button
+          type="button"
+          onClick={onShowResults}
           className="px-3 py-1.5 rounded-md border border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised text-xs font-medium transition-colors duration-75"
         >
-          Leaderboard
-        </Link>
+          Match results
+        </button>
         {allFinished && (
           <Link
             href="/sudoku/new-game"
@@ -1301,6 +1322,203 @@ function PlayerRow({
             backgroundColor: finished ? "var(--success)" : "var(--brand)",
           }}
         />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Race match-results modal. Replaces the previous "go check the global
+ * leaderboard" CTA with the actual standings for THIS match: ranked
+ * podium with each player's time, mistakes, and a locally-computed
+ * score (same formula the server uses, so it matches the eventual
+ * leaderboard row).
+ *
+ * DNF players (still racing or quit) appear after the finishers,
+ * sorted by progress and marked "Racing…" / "DNF". The modal is
+ * dismissible so the user can spectate or scroll back through the
+ * board after closing.
+ */
+function RaceResultsModal({
+  players,
+  meId,
+  difficulty,
+  myElapsedMs,
+  myMistakes,
+  allFinished,
+  onClose,
+}: {
+  players: Player[];
+  meId: string;
+  difficulty: Difficulty;
+  /** The current player's elapsed time at the moment of finishing — used
+   *  when the player row hasn't been updated by the server yet. */
+  myElapsedMs: number;
+  myMistakes: number;
+  allFinished: boolean;
+  onClose: () => void;
+}) {
+  // Sort: finishers by finish time (ascending), then non-finishers.
+  const sorted = [...players].sort((a, b) => {
+    const aDone = Boolean(a.finished_at);
+    const bDone = Boolean(b.finished_at);
+    if (aDone && bDone) {
+      return (a.finish_time_ms ?? 0) - (b.finish_time_ms ?? 0);
+    }
+    if (aDone) return -1;
+    if (bDone) return 1;
+    return 0;
+  });
+  const finishers = sorted.filter((p) => p.finished_at);
+  const winnerId = finishers[0]?.id ?? null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 backdrop-blur-sm p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="race-results-title"
+    >
+      <div className="bg-paper border border-edge rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-[var(--shadow-lifted)] flex flex-col gap-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.18em] text-ink-faint font-medium">
+              {DIFFICULTY_LABEL[difficulty]} race
+            </div>
+            <h2
+              id="race-results-title"
+              className="font-display text-3xl text-ink mt-1"
+            >
+              {allFinished ? "Final results" : "Match standings"}
+            </h2>
+            {!allFinished && (
+              <p className="text-xs text-ink-faint mt-1">
+                Some players are still racing.
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close results"
+            className="shrink-0 text-ink-faint hover:text-ink transition-colors duration-75 text-2xl leading-none -mt-1"
+          >
+            ×
+          </button>
+        </div>
+
+        <ol className="flex flex-col gap-1.5">
+          {sorted.map((p, i) => {
+            const finished = Boolean(p.finished_at);
+            const rank = finished ? i + 1 : null;
+            const isMe = p.id === meId;
+            const isWinner = p.id === winnerId;
+
+            // Use the latest live state for "me" — the player row may not have
+            // been updated by the server yet at the moment the modal mounts.
+            const myFinishMs = isMe && finished
+              ? p.finish_time_ms ?? myElapsedMs
+              : p.finish_time_ms;
+            const myMistakeCount = isMe ? myMistakes : p.mistakes ?? 0;
+
+            const score =
+              finished && myFinishMs !== null && myFinishMs !== undefined
+                ? calculateScore(
+                    difficulty,
+                    myFinishMs,
+                    myMistakeCount,
+                    0, // multiplayer races never use hints
+                  )
+                : null;
+
+            const rankBadge =
+              rank === 1
+                ? "🥇"
+                : rank === 2
+                  ? "🥈"
+                  : rank === 3
+                    ? "🥉"
+                    : rank
+                      ? `#${rank}`
+                      : "—";
+
+            return (
+              <li
+                key={p.id}
+                className={
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl border " +
+                  (isWinner
+                    ? "border-success/40 bg-success-soft"
+                    : isMe
+                      ? "border-brand/40 bg-brand-soft"
+                      : "border-edge bg-paper")
+                }
+              >
+                <div
+                  className={
+                    "w-8 shrink-0 text-center font-mono text-sm tabular-nums " +
+                    (rank === 1
+                      ? "text-warning font-semibold"
+                      : rank
+                        ? "text-ink"
+                        : "text-ink-faint")
+                  }
+                >
+                  {rankBadge}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-ink truncate">
+                    {p.display_name}
+                    {isMe && (
+                      <span className="text-ink-faint font-normal"> (you)</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-ink-faint font-mono tabular-nums mt-0.5">
+                    {finished
+                      ? `${formatBannerTime(myFinishMs ?? 0)} · ${myMistakeCount} ✕`
+                      : "Racing…"}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  {score !== null ? (
+                    <>
+                      <div className="font-display text-lg text-brand tabular-nums leading-tight">
+                        {score.toLocaleString()}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-[0.12em] text-ink-faint font-medium">
+                        pts
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-ink-faint">—</div>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+
+        <div className="flex flex-wrap gap-2 justify-center pt-1">
+          <Link
+            href="/sudoku/new-game"
+            className="px-4 py-2 rounded-lg bg-brand hover:bg-brand-hover text-brand-ink font-medium text-sm transition-colors duration-75"
+          >
+            New game
+          </Link>
+          <Link
+            href="/sudoku"
+            className="px-4 py-2 rounded-lg border border-edge bg-paper text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+          >
+            Sudoku home
+          </Link>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg border border-edge bg-paper text-ink-soft hover:text-ink hover:bg-paper-raised font-medium text-sm transition-colors duration-75"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
