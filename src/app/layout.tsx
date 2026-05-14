@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BoardThemeProvider } from "@/components/BoardThemeProvider";
 import { ToastProvider } from "@/components/toast/ToastProvider";
+import { EmbedMode } from "@/components/EmbedMode";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -112,6 +114,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-canvas text-ink">
+        {/* Reads ?embed=1 and toggles a body attribute so the CSS below
+            hides our header/footer. Lets schools/Google Sites/Notion
+            iframe a game cleanly. Wrapped in Suspense because
+            useSearchParams forces opt-out of static rendering. */}
+        <Suspense fallback={null}>
+          <EmbedMode />
+        </Suspense>
         <ThemeProvider>
           <BoardThemeProvider>
             <ToastProvider>{children}</ToastProvider>

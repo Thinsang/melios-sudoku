@@ -368,6 +368,24 @@ h1, h2, h3 {
   animation: shake 300ms ease-in-out;
 }
 
+/* =========================================================================
+ * Embed mode (?embed=1)
+ * Lets external sites — a Google Site, Notion page, school portal, etc. —
+ * iframe a game without the Melio chrome eating their layout. The header
+ * and footer come from per-section layouts; the global "← Melio Games"
+ * back-link is also stripped. The game itself keeps working normally.
+ * =======================================================================*/
+
+body[data-embed-mode="1"] header,
+body[data-embed-mode="1"] footer,
+body[data-embed-mode="1"] [data-embed-hide] {
+  display: none !important;
+}
+
+body[data-embed-mode="1"] main {
+  padding-top: 0.75rem !important;
+}
+
 /* Custom focus ring — uses brand, not the browser default. */
 :focus-visible {
   outline: 2px solid var(--brand);

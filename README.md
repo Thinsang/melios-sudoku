@@ -48,6 +48,45 @@ The full step-by-step is in [DEPLOY.md](DEPLOY.md). Short version:
 4. Deploy.
 5. Update Supabase **Authentication → URL Configuration** — set Site URL to your Vercel URL and add `<vercel-url>/auth/callback` to Redirect URLs.
 
+## Embedding the games elsewhere
+
+Any page can `<iframe>` Melio Games. The site sets `Content-Security-Policy:
+frame-ancestors *` and does NOT set `X-Frame-Options`, so browsers allow
+embedding from any host (Google Sites, Notion, school portals, your own
+blog).
+
+Add `?embed=1` to the URL to hide our header/footer chrome for a cleaner
+embed:
+
+```html
+<iframe
+  src="https://meliogames.com/wordle?embed=1"
+  width="100%"
+  height="700"
+  style="border: 0; border-radius: 12px"
+  loading="lazy"
+></iframe>
+```
+
+Most games work fully inside an iframe — solo Sudoku, Wordle, Connections,
+Minesweeper, and 2048 are all client-side with localStorage state. The
+multiplayer parts (race/co-op, leaderboard, friends) need Supabase auth
+cookies, which third-party-context iframes often block; for those, link
+out to `meliogames.com` instead of embedding.
+
+### "Unblocked at school" note
+
+There is no way to host a Next.js app on Google Sheets — that's a meme.
+What "unblocked games" sites actually do is one of:
+
+1. **Iframe from a Google Site** (different product) pointing at the
+   real game host. The iframe support above makes this work.
+2. **Mirror to a fresh subdomain** schools haven't blocked yet (a
+   Vercel preview URL, `*.pages.dev`, `*.netlify.app`, etc.).
+3. **Pick an innocuous domain name** that doesn't read as "games".
+
+Option 1 is the easiest — drop the iframe above into any Google Site.
+
 ## Architecture sketch
 
 - **Client-side puzzle generation** for solo (`src/lib/sudoku/engine.ts`). The generator builds a fully solved board, then removes cells while verifying the puzzle still has exactly one solution.
