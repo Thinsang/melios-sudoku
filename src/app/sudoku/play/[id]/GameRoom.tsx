@@ -729,7 +729,14 @@ export function GameRoom({
 
   function copyInvite() {
     if (typeof window === "undefined") return;
-    const link = `${window.location.origin}/play/${game.id}`;
+    // Prefer the short invite-code form (/sudoku/i/<code>) — it's nicer
+    // to share and resolves via the route handler. Fall back to the
+    // direct game URL if for some reason the row has no code yet.
+    // (The previous version was missing the /sudoku prefix entirely and
+    // produced 404s when pasted into the browser.)
+    const link = game.invite_code
+      ? `${window.location.origin}/sudoku/i/${game.invite_code}`
+      : `${window.location.origin}/sudoku/play/${game.id}`;
     void navigator.clipboard.writeText(link).then(() => {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
